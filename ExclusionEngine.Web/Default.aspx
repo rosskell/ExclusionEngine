@@ -1,0 +1,51 @@
+<%@ Page Title="Dashboard" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="Default.aspx.cs" Inherits="ExclusionEngine.Web._Default" %>
+<asp:Content ID="Content1" ContentPlaceHolderID="MainContent" runat="server">
+    <div class="card">
+        <div class="row">
+            <h2>Customer Entry</h2>
+            <asp:Button ID="LogoutButton" runat="server" Text="Log out" OnClick="LogoutButton_Click" CssClass="btn secondary" />
+        </div>
+        <asp:Label ID="MessageLabel" runat="server" />
+        <div class="form-grid">
+            <label>Client</label>
+            <asp:DropDownList ID="ClientDropDown" runat="server" />
+            <label>Customer Number</label><asp:TextBox ID="CustomerNumberTextBox" runat="server" />
+            <label>First Name</label><asp:TextBox ID="FirstNameTextBox" runat="server" />
+            <label>Last Name</label><asp:TextBox ID="LastNameTextBox" runat="server" />
+            <label>Address 1</label><asp:TextBox ID="Address1TextBox" runat="server" />
+            <label>Address 2</label><asp:TextBox ID="Address2TextBox" runat="server" />
+            <label>City</label><asp:TextBox ID="CityTextBox" runat="server" />
+            <label>State</label><asp:TextBox ID="StateTextBox" runat="server" MaxLength="2" />
+            <label>Zip</label><asp:TextBox ID="ZipTextBox" runat="server" MaxLength="10" />
+            <label>Email</label><asp:TextBox ID="EmailTextBox" runat="server" TextMode="Email" />
+            <asp:HiddenField ID="ConfirmedStandardized" runat="server" Value="false" />
+            <asp:Button ID="ValidateAddressButton" runat="server" Text="Validate + Save" CssClass="btn" OnClick="ValidateAddressButton_Click" />
+        </div>
+    </div>
+
+    <div id="confirmModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Confirm Address Changes</h3>
+            <p><strong>Entered:</strong> <span id="enteredAddress"></span></p>
+            <p><strong>Standardized (CASS):</strong> <span id="cassAddress"></span></p>
+            <button type="button" class="btn" onclick="acceptCassChanges()">Accept & Save</button>
+            <button type="button" class="btn secondary" onclick="closeCassModal()">Keep Original</button>
+        </div>
+    </div>
+
+    <asp:Literal ID="ModalScriptLiteral" runat="server" />
+
+    <div class="card">
+        <h3>Recent Entries</h3>
+        <asp:GridView ID="RecentGrid" runat="server" CssClass="grid" AutoGenerateColumns="false">
+            <Columns>
+                <asp:BoundField HeaderText="Client" DataField="ClientName" />
+                <asp:BoundField HeaderText="Customer #" DataField="CustomerNumber" />
+                <asp:BoundField HeaderText="Name" DataField="FullName" />
+                <asp:BoundField HeaderText="Address" DataField="FormattedAddress" />
+                <asp:BoundField HeaderText="Email" DataField="Email" />
+                <asp:BoundField HeaderText="Created" DataField="CreatedAt" />
+            </Columns>
+        </asp:GridView>
+    </div>
+</asp:Content>
