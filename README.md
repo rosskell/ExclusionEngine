@@ -7,19 +7,23 @@ This repository contains an **ASP.NET Web Forms** application targeting **.NET F
 - Client login page.
 - Users can be assigned to multiple clients and select the active client during entry.
 - Customer data capture fields:
-  - Customer Number
-  - First Name
-  - Last Name
-  - Address1
-  - Address2
-  - City
-  - State
-  - Zip
-  - Email
+  - Customer Number *(optional)*
+  - First Name *(optional)*
+  - Last Name *(optional)*
+  - Address1 *(required)*
+  - Address2 *(optional)*
+  - City *(required)*
+  - State *(required 2-letter)*
+  - Zip *(optional)*
+  - Email *(optional)*
 - SQL Server storage with per-user/per-client scoping.
 - Edit existing records from the Recent Entries grid.
 - Recent entries are filtered to clients the current user is authorized to access.
 - Password hashing (PBKDF2) for stored credentials.
+- Admin-only user management page (`AdminUsers.aspx`) to add/update users, admin flags, and client access mappings.
+- Forgot password flow:
+  - `ForgotPassword.aspx` generates a token and sends a reset link to the user email.
+  - `ResetPassword.aspx` consumes the token and updates password.
 - Address standardization flow intended for **BCC Satori CASS Server** integration:
   - Current implementation contains a placeholder in `SatoriCassService`.
   - Before saving, entered and standardized addresses are compared.
@@ -31,9 +35,13 @@ This repository contains an **ASP.NET Web Forms** application targeting **.NET F
 - `ExclusionEngine.Web/ExclusionEngine.csproj`
 - `ExclusionEngine.Web/Default.aspx` (entry form + modal confirmation)
 - `ExclusionEngine.Web/Login.aspx`
+- `ExclusionEngine.Web/AdminUsers.aspx`
+- `ExclusionEngine.Web/ForgotPassword.aspx`
+- `ExclusionEngine.Web/ResetPassword.aspx`
 - `ExclusionEngine.Web/App_Code/Repository.cs` (SQL access + schema/seed)
 - `ExclusionEngine.Web/App_Code/Security.cs` (password hashing/verification)
 - `ExclusionEngine.Web/App_Code/SatoriCassService.cs` (CASS integration point)
+- `ExclusionEngine.Web/App_Code/EmailService.cs` (SMTP reset email)
 
 ## Run in IIS / Visual Studio
 
@@ -41,12 +49,17 @@ This repository contains an **ASP.NET Web Forms** application targeting **.NET F
 2. Restore NuGet packages (Visual Studio restore or `nuget restore ExclusionEngine.sln`).
 3. Ensure local SQL Server / LocalDB is available.
 4. Update `Web.config` connection string as needed.
-5. Optionally configure `SatoriCassEndpoint`, `SatoriCassUsername`, and `SatoriCassPassword`.
-6. Run the web app.
+5. Optionally configure app settings in `Web.config`:
+   - `SatoriCassEndpoint`, `SatoriCassUsername`, `SatoriCassPassword`
+   - `AppBaseUrl` (used in reset links)
+   - `FromEmail` (used by SMTP sender)
+6. Configure SMTP in `system.net/mailSettings` (or machine config) for reset email delivery.
+7. Run the web app.
 
 Demo seed account (for local testing):
 - Username: `demo`
 - Password: `demo123`
+- Demo account is seeded as admin to bootstrap user administration.
 
 ## BCC Satori CASS hookup
 

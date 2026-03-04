@@ -2,7 +2,10 @@
 <asp:Content ID="Content1" ContentPlaceHolderID="MainContent" runat="server">
     <div class="card">
         <div class="row">
-            <h2>Customer Entry</h2>
+            <div>
+                <h2>Customer Entry</h2>
+                <asp:HyperLink ID="AdminUsersLink" runat="server" NavigateUrl="~/AdminUsers.aspx" Visible="false">Admin: Users</asp:HyperLink>
+            </div>
             <asp:Button ID="LogoutButton" runat="server" Text="Log out" OnClick="LogoutButton_Click" CssClass="btn secondary" CausesValidation="false" UseSubmitBehavior="false" />
         </div>
         <asp:Label ID="MessageLabel" runat="server" />

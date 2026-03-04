@@ -10,5 +10,6 @@
             <asp:TextBox ID="PasswordTextBox" runat="server" TextMode="Password" />
             <asp:Button ID="LoginButton" runat="server" Text="Sign in" OnClick="LoginButton_Click" CssClass="btn" />
         </div>
+        <p><asp:HyperLink ID="ForgotPasswordLink" runat="server" NavigateUrl="~/ForgotPassword.aspx">Forgot password?</asp:HyperLink></p>
     </div>
 </asp:Content>

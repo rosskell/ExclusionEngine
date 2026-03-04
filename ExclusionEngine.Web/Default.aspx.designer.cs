@@ -4,6 +4,7 @@ namespace ExclusionEngine.Web
     {
         protected global::System.Web.UI.WebControls.Button LogoutButton;
         protected global::System.Web.UI.WebControls.Label MessageLabel;
+        protected global::System.Web.UI.WebControls.HyperLink AdminUsersLink;
         protected global::System.Web.UI.WebControls.DropDownList ClientDropDown;
         protected global::System.Web.UI.WebControls.TextBox CustomerNumberTextBox;
         protected global::System.Web.UI.WebControls.TextBox FirstNameTextBox;

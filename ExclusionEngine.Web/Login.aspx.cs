@@ -23,6 +23,8 @@ namespace ExclusionEngine.Web
 
             Session["UserId"] = user.UserId;
             Session["Username"] = user.Username;
+            Session["UserEmail"] = user.Email;
+            Session["IsAdmin"] = user.IsAdmin;
             Response.Redirect("~/Default.aspx");
         }
     }

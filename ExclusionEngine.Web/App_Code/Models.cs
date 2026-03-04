@@ -1,9 +1,22 @@
+using System.Collections.Generic;
+
 namespace ExclusionEngine.Web
 {
     public class UserModel
     {
         public int UserId { get; set; }
         public string Username { get; set; }
+        public string Email { get; set; }
+        public bool IsAdmin { get; set; }
+    }
+
+    public class UserAdminModel
+    {
+        public int UserId { get; set; }
+        public string Username { get; set; }
+        public string Email { get; set; }
+        public bool IsAdmin { get; set; }
+        public List<int> ClientIds { get; set; } = new List<int>();
     }
 
     public class ClientModel

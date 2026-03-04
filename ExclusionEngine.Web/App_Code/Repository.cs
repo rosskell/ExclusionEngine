@@ -20,7 +20,11 @@ IF OBJECT_ID('dbo.Users','U') IS NULL
 CREATE TABLE dbo.Users (
     UserId INT IDENTITY(1,1) PRIMARY KEY,
     Username NVARCHAR(100) NOT NULL UNIQUE,
-    PasswordHash NVARCHAR(200) NOT NULL
+    PasswordHash NVARCHAR(200) NOT NULL,
+    Email NVARCHAR(200) NULL,
+    IsAdmin BIT NOT NULL DEFAULT(0),
+    PasswordResetToken NVARCHAR(200) NULL,
+    PasswordResetExpiresUtc DATETIME2 NULL
 );
 IF OBJECT_ID('dbo.Clients','U') IS NULL
 CREATE TABLE dbo.Clients (
@@ -53,7 +57,17 @@ CREATE TABLE dbo.CustomerEntries (
     CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
     CONSTRAINT FK_CustomerEntries_Users FOREIGN KEY (UserId) REFERENCES dbo.Users(UserId),
     CONSTRAINT FK_CustomerEntries_Clients FOREIGN KEY (ClientId) REFERENCES dbo.Clients(ClientId)
-);";
+);
+
+IF COL_LENGTH('dbo.Users', 'Email') IS NULL
+    ALTER TABLE dbo.Users ADD Email NVARCHAR(200) NULL;
+IF COL_LENGTH('dbo.Users', 'IsAdmin') IS NULL
+    ALTER TABLE dbo.Users ADD IsAdmin BIT NOT NULL CONSTRAINT DF_Users_IsAdmin DEFAULT(0);
+IF COL_LENGTH('dbo.Users', 'PasswordResetToken') IS NULL
+    ALTER TABLE dbo.Users ADD PasswordResetToken NVARCHAR(200) NULL;
+IF COL_LENGTH('dbo.Users', 'PasswordResetExpiresUtc') IS NULL
+    ALTER TABLE dbo.Users ADD PasswordResetExpiresUtc DATETIME2 NULL;
+";
                 new SqlCommand(sql, conn).ExecuteNonQuery();
             }
         }
@@ -66,7 +80,11 @@ CREATE TABLE dbo.CustomerEntries (
                 var cmd = new SqlCommand(@"
 IF NOT EXISTS (SELECT 1 FROM dbo.Users WHERE Username = 'demo')
 BEGIN
-    INSERT INTO dbo.Users (Username, PasswordHash) VALUES ('demo', @demoPasswordHash);
+    INSERT INTO dbo.Users (Username, PasswordHash, Email, IsAdmin) VALUES ('demo', @demoPasswordHash, 'demo@example.com', 1);
+END
+ELSE
+BEGIN
+    UPDATE dbo.Users SET Email = COALESCE(NULLIF(Email,''), 'demo@example.com') WHERE Username = 'demo';
 END
 IF NOT EXISTS (SELECT 1 FROM dbo.Clients WHERE ClientCode = 'CLI-ALPHA')
 BEGIN
@@ -94,7 +112,7 @@ END", conn);
         public static UserModel ValidateUser(string username, string password)
         {
             using (var conn = new SqlConnection(ConnectionString))
-            using (var cmd = new SqlCommand("SELECT UserId, Username, PasswordHash FROM dbo.Users WHERE Username = @u", conn))
+            using (var cmd = new SqlCommand("SELECT UserId, Username, PasswordHash, COALESCE(Email,''), IsAdmin FROM dbo.Users WHERE Username = @u", conn))
             {
                 conn.Open();
                 cmd.Parameters.AddWithValue("@u", username ?? string.Empty);
@@ -107,10 +125,36 @@ END", conn);
                     return new UserModel
                     {
                         UserId = reader.GetInt32(0),
-                        Username = reader.GetString(1)
+                        Username = reader.GetString(1),
+                        Email = reader.GetString(3),
+                        IsAdmin = reader.GetBoolean(4)
                     };
                 }
             }
+        }
+
+        public static List<ClientModel> GetAllClients()
+        {
+            var result = new List<ClientModel>();
+            using (var conn = new SqlConnection(ConnectionString))
+            using (var cmd = new SqlCommand("SELECT ClientId, ClientCode, ClientName FROM dbo.Clients ORDER BY ClientName", conn))
+            {
+                conn.Open();
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        result.Add(new ClientModel
+                        {
+                            ClientId = reader.GetInt32(0),
+                            ClientCode = reader.GetString(1),
+                            ClientName = reader.GetString(2)
+                        });
+                    }
+                }
+            }
+
+            return result;
         }
 
         public static List<ClientModel> GetClientsForUser(int userId)
@@ -293,6 +337,200 @@ ORDER BY ce.CreatedAt DESC", conn))
                 var dt = new DataTable();
                 dt.Load(cmd.ExecuteReader());
                 return dt;
+            }
+        }
+
+        public static DataTable GetAllUsersForAdmin()
+        {
+            using (var conn = new SqlConnection(ConnectionString))
+            using (var cmd = new SqlCommand(@"
+SELECT 
+    u.UserId,
+    u.Username,
+    COALESCE(u.Email, '') AS Email,
+    u.IsAdmin,
+    STUFF((
+        SELECT ', ' + c.ClientCode
+        FROM dbo.UserClients uc2
+        INNER JOIN dbo.Clients c ON c.ClientId = uc2.ClientId
+        WHERE uc2.UserId = u.UserId
+        ORDER BY c.ClientCode
+        FOR XML PATH(''), TYPE
+    ).value('.', 'nvarchar(max)'), 1, 2, '') AS ClientCodes
+FROM dbo.Users u
+ORDER BY u.Username", conn))
+            {
+                conn.Open();
+                var dt = new DataTable();
+                dt.Load(cmd.ExecuteReader());
+                return dt;
+            }
+        }
+
+        public static UserAdminModel GetUserForAdmin(int userId)
+        {
+            using (var conn = new SqlConnection(ConnectionString))
+            {
+                conn.Open();
+                UserAdminModel model = null;
+
+                using (var cmd = new SqlCommand("SELECT UserId, Username, COALESCE(Email,''), IsAdmin FROM dbo.Users WHERE UserId=@id", conn))
+                {
+                    cmd.Parameters.AddWithValue("@id", userId);
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        if (!reader.Read()) return null;
+                        model = new UserAdminModel
+                        {
+                            UserId = reader.GetInt32(0),
+                            Username = reader.GetString(1),
+                            Email = reader.GetString(2),
+                            IsAdmin = reader.GetBoolean(3)
+                        };
+                    }
+                }
+
+                using (var cmd = new SqlCommand("SELECT ClientId FROM dbo.UserClients WHERE UserId=@id", conn))
+                {
+                    cmd.Parameters.AddWithValue("@id", userId);
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            model.ClientIds.Add(reader.GetInt32(0));
+                        }
+                    }
+                }
+
+                return model;
+            }
+        }
+
+        public static int CreateUser(UserAdminModel user, string password)
+        {
+            using (var conn = new SqlConnection(ConnectionString))
+            {
+                conn.Open();
+                using (var tx = conn.BeginTransaction())
+                {
+                    int userId;
+                    using (var cmd = new SqlCommand(@"
+INSERT INTO dbo.Users(Username, PasswordHash, Email, IsAdmin)
+VALUES(@username, @passwordHash, @email, @isAdmin);
+SELECT CAST(SCOPE_IDENTITY() AS INT);", conn, tx))
+                    {
+                        cmd.Parameters.AddWithValue("@username", user.Username ?? string.Empty);
+                        cmd.Parameters.AddWithValue("@passwordHash", Security.HashPassword(password ?? string.Empty));
+                        cmd.Parameters.AddWithValue("@email", string.IsNullOrWhiteSpace(user.Email) ? (object)DBNull.Value : user.Email.Trim());
+                        cmd.Parameters.AddWithValue("@isAdmin", user.IsAdmin);
+                        userId = Convert.ToInt32(cmd.ExecuteScalar());
+                    }
+
+                    ReplaceUserClientMappings(conn, tx, userId, user.ClientIds);
+                    tx.Commit();
+                    return userId;
+                }
+            }
+        }
+
+        public static void UpdateUser(UserAdminModel user, string newPassword)
+        {
+            using (var conn = new SqlConnection(ConnectionString))
+            {
+                conn.Open();
+                using (var tx = conn.BeginTransaction())
+                {
+                    var sql = @"
+UPDATE dbo.Users
+SET Username = @username,
+    Email = @email,
+    IsAdmin = @isAdmin";
+
+                    if (!string.IsNullOrWhiteSpace(newPassword))
+                    {
+                        sql += ", PasswordHash = @passwordHash";
+                    }
+
+                    sql += " WHERE UserId = @userId";
+
+                    using (var cmd = new SqlCommand(sql, conn, tx))
+                    {
+                        cmd.Parameters.AddWithValue("@userId", user.UserId);
+                        cmd.Parameters.AddWithValue("@username", user.Username ?? string.Empty);
+                        cmd.Parameters.AddWithValue("@email", string.IsNullOrWhiteSpace(user.Email) ? (object)DBNull.Value : user.Email.Trim());
+                        cmd.Parameters.AddWithValue("@isAdmin", user.IsAdmin);
+                        if (!string.IsNullOrWhiteSpace(newPassword))
+                        {
+                            cmd.Parameters.AddWithValue("@passwordHash", Security.HashPassword(newPassword));
+                        }
+
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    ReplaceUserClientMappings(conn, tx, user.UserId, user.ClientIds);
+                    tx.Commit();
+                }
+            }
+        }
+
+        public static string CreatePasswordResetToken(string email)
+        {
+            using (var conn = new SqlConnection(ConnectionString))
+            using (var cmd = new SqlCommand(@"
+UPDATE dbo.Users
+SET PasswordResetToken = @token,
+    PasswordResetExpiresUtc = @expires
+WHERE Email = @email;
+SELECT @@ROWCOUNT;", conn))
+            {
+                conn.Open();
+                var token = Guid.NewGuid().ToString("N");
+                cmd.Parameters.AddWithValue("@token", token);
+                cmd.Parameters.AddWithValue("@expires", DateTime.UtcNow.AddHours(1));
+                cmd.Parameters.AddWithValue("@email", email ?? string.Empty);
+                var affected = Convert.ToInt32(cmd.ExecuteScalar());
+                return affected > 0 ? token : null;
+            }
+        }
+
+        public static bool ResetPasswordWithToken(string token, string newPassword)
+        {
+            using (var conn = new SqlConnection(ConnectionString))
+            using (var cmd = new SqlCommand(@"
+UPDATE dbo.Users
+SET PasswordHash = @hash,
+    PasswordResetToken = NULL,
+    PasswordResetExpiresUtc = NULL
+WHERE PasswordResetToken = @token
+  AND PasswordResetExpiresUtc IS NOT NULL
+  AND PasswordResetExpiresUtc >= @now", conn))
+            {
+                conn.Open();
+                cmd.Parameters.AddWithValue("@hash", Security.HashPassword(newPassword ?? string.Empty));
+                cmd.Parameters.AddWithValue("@token", token ?? string.Empty);
+                cmd.Parameters.AddWithValue("@now", DateTime.UtcNow);
+                return cmd.ExecuteNonQuery() == 1;
+            }
+        }
+
+        private static void ReplaceUserClientMappings(SqlConnection conn, SqlTransaction tx, int userId, List<int> clientIds)
+        {
+            using (var delete = new SqlCommand("DELETE FROM dbo.UserClients WHERE UserId=@userId", conn, tx))
+            {
+                delete.Parameters.AddWithValue("@userId", userId);
+                delete.ExecuteNonQuery();
+            }
+
+            if (clientIds == null) return;
+
+            foreach (var clientId in clientIds)
+            {
+                using (var insert = new SqlCommand("INSERT INTO dbo.UserClients(UserId, ClientId) VALUES (@userId, @clientId)", conn, tx))
+                {
+                    insert.Parameters.AddWithValue("@userId", userId);
+                    insert.Parameters.AddWithValue("@clientId", clientId);
+                    insert.ExecuteNonQuery();
+                }
             }
         }
     }

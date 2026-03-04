@@ -8,7 +8,6 @@ namespace ExclusionEngine.Web
     {
         protected void Page_Load(object sender, EventArgs e)
         {
-            // Reset transient modal script on each request so it only appears immediately after validation.
             ModalScriptLiteral.Text = string.Empty;
 
             if (Session["UserId"] == null)
@@ -16,6 +15,8 @@ namespace ExclusionEngine.Web
                 Response.Redirect("~/Login.aspx");
                 return;
             }
+
+            AdminUsersLink.Visible = IsAdmin;
 
             if (!IsPostBack)
             {
@@ -25,7 +26,7 @@ namespace ExclusionEngine.Web
         }
 
         private int UserId => Convert.ToInt32(Session["UserId"]);
-
+        private bool IsAdmin => Session["IsAdmin"] != null && Convert.ToBoolean(Session["IsAdmin"]);
         private bool IsEditing => !string.IsNullOrWhiteSpace(EditingEntryId.Value);
 
         private void BindClients()
@@ -130,22 +131,27 @@ namespace ExclusionEngine.Web
 
         private void SaveEntry(CustomerEntryInput entry)
         {
-            if (IsEditing)
+            try
             {
-                Repository.UpdateEntry(UserId, Convert.ToInt32(EditingEntryId.Value), entry);
-                MessageLabel.Text = "<span class='success'>Customer entry updated.</span>";
-            }
-            else
-            {
-                Repository.SaveEntry(UserId, entry);
-                MessageLabel.Text = "<span class='success'>Customer entry saved.</span>";
-            }
+                if (IsEditing)
+                {
+                    Repository.UpdateEntry(UserId, Convert.ToInt32(EditingEntryId.Value), entry);
+                    MessageLabel.Text = "<span class='success'>Customer entry updated.</span>";
+                }
+                else
+                {
+                    Repository.SaveEntry(UserId, entry);
+                    MessageLabel.Text = "<span class='success'>Customer entry saved.</span>";
+                }
 
-            Session.Remove("PendingOriginalEntry");
-            Session.Remove("PendingStandardizedEntry");
-            ClearPendingCassState();
-            ResetEditor();
-            BindRecent();
+                ClearPendingCassState();
+                ResetEditor();
+                BindRecent();
+            }
+            catch (Exception ex)
+            {
+                MessageLabel.Text = $"<span class='error'>{HttpUtility.HtmlEncode(ex.Message)}</span>";
+            }
         }
 
         private void ClearPendingCassState()
@@ -190,13 +196,9 @@ namespace ExclusionEngine.Web
                 Email = EmailTextBox.Text.Trim()
             };
 
-            if (string.IsNullOrWhiteSpace(entry.CustomerNumber)) validationError = "Customer Number is required.";
-            else if (string.IsNullOrWhiteSpace(entry.FirstName)) validationError = "First Name is required.";
-            else if (string.IsNullOrWhiteSpace(entry.LastName)) validationError = "Last Name is required.";
-            else if (string.IsNullOrWhiteSpace(entry.Address1)) validationError = "Address 1 is required.";
+            if (string.IsNullOrWhiteSpace(entry.Address1)) validationError = "Address 1 is required.";
             else if (string.IsNullOrWhiteSpace(entry.City)) validationError = "City is required.";
             else if (string.IsNullOrWhiteSpace(entry.State) || entry.State.Length != 2) validationError = "State must be two letters.";
-            else if (string.IsNullOrWhiteSpace(entry.Zip)) validationError = "Zip is required.";
 
             return string.IsNullOrEmpty(validationError);
         }
