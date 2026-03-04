@@ -2,6 +2,7 @@ using System;
 using System.Configuration;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Reflection;
 
 namespace ExclusionEngine.Web
@@ -119,7 +120,12 @@ namespace ExclusionEngine.Web
 
         private static object CreateZipTask()
         {
+            var traceEnabled = IsTruthy(ConfigurationManager.AppSettings["SatoriCassTrace"]);
             var configuredProgId = (ConfigurationManager.AppSettings["SatoriCassProgId"] ?? string.Empty).Trim();
+            var configuredClsid = (ConfigurationManager.AppSettings["SatoriCassClsid"] ?? string.Empty).Trim();
+            var interopPath = (ConfigurationManager.AppSettings["SatoriCassInteropPath"] ?? string.Empty).Trim();
+            var interopTypeName = (ConfigurationManager.AppSettings["SatoriCassInteropType"] ?? "MRTKTASKLib.ZIPTaskClass").Trim();
+
             var progIds = new[]
             {
                 configuredProgId,
@@ -131,13 +137,59 @@ namespace ExclusionEngine.Web
             foreach (var progId in progIds)
             {
                 if (string.IsNullOrWhiteSpace(progId)) continue;
-                var type = Type.GetTypeFromProgID(progId, false);
-                if (type != null)
+                try
                 {
-                    return Activator.CreateInstance(type);
+                    TraceLog(traceEnabled, "Trying CASS activation via ProgID: " + progId);
+                    var type = Type.GetTypeFromProgID(progId, false);
+                    if (type != null)
+                    {
+                        return Activator.CreateInstance(type);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    TraceLog(traceEnabled, "ProgID activation failed for " + progId + ": " + ex.Message);
                 }
             }
 
+            if (!string.IsNullOrWhiteSpace(configuredClsid) && Guid.TryParse(configuredClsid, out var clsid))
+            {
+                try
+                {
+                    TraceLog(traceEnabled, "Trying CASS activation via CLSID: " + configuredClsid);
+                    var clsidType = Type.GetTypeFromCLSID(clsid, false);
+                    if (clsidType != null)
+                    {
+                        return Activator.CreateInstance(clsidType);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    TraceLog(traceEnabled, "CLSID activation failed for " + configuredClsid + ": " + ex.Message);
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(interopPath) && File.Exists(interopPath))
+            {
+                try
+                {
+                    TraceLog(traceEnabled, "Trying CASS activation via interop assembly path: " + interopPath);
+                    var asm = Assembly.LoadFrom(interopPath);
+                    var interopType = asm.GetType(interopTypeName, false);
+                    if (interopType != null)
+                    {
+                        return Activator.CreateInstance(interopType);
+                    }
+
+                    TraceLog(traceEnabled, "Interop type not found: " + interopTypeName);
+                }
+                catch (Exception ex)
+                {
+                    TraceLog(traceEnabled, "Interop assembly activation failed: " + ex.Message);
+                }
+            }
+
+            TraceLog(traceEnabled, "CreateZipTask failed for all configured activation routes.");
             return null;
         }
 

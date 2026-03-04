@@ -75,7 +75,10 @@ Demo seed account (for local testing):
 
 ### Required config
 - `SatoriCassMailRoomServer` (preferred, e.g. `10.0.2.37:5150`)
-- `SatoriCassProgId` (default `MRTKTASKLib.ZIPTask`)
+- One activation route:
+  - `SatoriCassProgId` (default `MRTKTASKLib.ZIPTask`), or
+  - `SatoriCassClsid` (if you have a CLSID but ProgID lookup fails), or
+  - `SatoriCassInteropPath` + `SatoriCassInteropType` (last-resort reflection load without adding project reference)
 
 ### Optional config
 - `SatoriCassEndpoint` (legacy fallback server key)
@@ -97,3 +100,14 @@ If COM activation still fails, verify:
 3. Clear Temporary ASP.NET files (`%LOCALAPPDATA%\Temp\Temporary ASP.NET Files`).
 4. Restart Visual Studio and run again.
 5. Keep IIS Express at 32-bit unless you are sure the COM registration is 64-bit.
+
+
+### Why `CreateZipTask()` can be null
+If `CreateZipTask()` returns null, activation failed for all routes (ProgID/CLSID/InteropPath).
+That usually means one of:
+- COM not registered on this machine/user context
+- bitness mismatch (x86 vs x64)
+- wrong ProgID/CLSID
+- interop DLL exists but not loadable in current process architecture
+
+Set `SatoriCassTrace=true` and check output to see which step is failing.
