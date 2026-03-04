@@ -89,3 +89,11 @@ If COM activation still fails, verify:
 - Mailroom Toolkit COM is registered on the web host.
 - IIS/IIS Express process bitness matches the COM registration (x86 vs x64).
 - For IIS Express in Visual Studio, toggle **Use 64-bit IIS Express** if needed and retry.
+
+
+### If you still see `BadImageFormatException` for `Interop.MRTKTASKLib`
+1. Remove any `Interop.MRTKTASKLib` reference from the Web project (References node and `.csproj`).
+2. Delete `bin` and `obj` folders for `ExclusionEngine.Web`.
+3. Clear Temporary ASP.NET files (`%LOCALAPPDATA%\Temp\Temporary ASP.NET Files`).
+4. Restart Visual Studio and run again.
+5. Keep IIS Express at 32-bit unless you are sure the COM registration is 64-bit.
