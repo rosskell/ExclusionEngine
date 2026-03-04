@@ -426,7 +426,7 @@ WHERE EntryId = @entryId", conn))
             }
         }
 
-        public static DataTable GetRecentEntriesForUser(int userId)
+        public static DataTable GetRecentEntriesForUser(int userId, string lastNameContains = null, string address1Contains = null)
         {
             using (var conn = new SqlConnection(ConnectionString))
             using (var cmd = new SqlCommand(@"
@@ -440,15 +440,21 @@ SELECT TOP 20
     ce.CreatedAt
 FROM dbo.CustomerEntries ce
 INNER JOIN dbo.Clients c ON ce.ClientId = c.ClientId
-WHERE ce.ClientId IN (
-    SELECT ClientId FROM dbo.UserClients WHERE UserId = @u
+WHERE (
+    ce.ClientId IN (
+        SELECT ClientId FROM dbo.UserClients WHERE UserId = @u
+    )
+    OR @isAdmin = 1
 )
-OR @isAdmin = 1
+AND (@lastName = '' OR ce.LastName LIKE '%' + @lastName + '%')
+AND (@address1 = '' OR ce.Address1 LIKE '%' + @address1 + '%')
 ORDER BY ce.CreatedAt DESC", conn))
             {
                 conn.Open();
                 cmd.Parameters.AddWithValue("@u", userId);
                 cmd.Parameters.AddWithValue("@isAdmin", IsAdminUser(userId));
+                cmd.Parameters.AddWithValue("@lastName", lastNameContains ?? string.Empty);
+                cmd.Parameters.AddWithValue("@address1", address1Contains ?? string.Empty);
                 var dt = new DataTable();
                 dt.Load(cmd.ExecuteReader());
                 return dt;

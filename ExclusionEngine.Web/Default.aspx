@@ -2,12 +2,12 @@
 <asp:Content ID="Content1" ContentPlaceHolderID="MainContent" runat="server">
     <div class="card">
         <div class="row">
-            <div>
-                <h2>Customer Entry</h2>
-                <asp:Button ID="UserAdminButton" runat="server" Text="User Admin" PostBackUrl="~/AdminUsers.aspx" CssClass="btn secondary" Visible="false" CausesValidation="false" UseSubmitBehavior="false" />
-                <asp:Button ID="ClientAdminButton" runat="server" Text="Client Admin" PostBackUrl="~/ClientAdmin.aspx" CssClass="btn secondary" Visible="false" CausesValidation="false" UseSubmitBehavior="false" />
+            <h2>Customer Entry</h2>
+            <div class="top-actions">
+                <asp:Button ID="UserAdminButton" runat="server" Text="User Admin" PostBackUrl="~/AdminUsers.aspx" CssClass="btn" Visible="false" CausesValidation="false" UseSubmitBehavior="false" />
+                <asp:Button ID="ClientAdminButton" runat="server" Text="Client Admin" PostBackUrl="~/ClientAdmin.aspx" CssClass="btn" Visible="false" CausesValidation="false" UseSubmitBehavior="false" />
+                <asp:Button ID="LogoutButton" runat="server" Text="Log out" OnClick="LogoutButton_Click" CssClass="btn secondary" CausesValidation="false" UseSubmitBehavior="false" />
             </div>
-            <asp:Button ID="LogoutButton" runat="server" Text="Log out" OnClick="LogoutButton_Click" CssClass="btn secondary" CausesValidation="false" UseSubmitBehavior="false" />
         </div>
         <asp:Label ID="MessageLabel" runat="server" />
         <div class="form-grid">
@@ -44,6 +44,12 @@
 
     <div class="card">
         <h3>Recent Entries (Authorized Clients Only)</h3>
+        <div class="search-row">
+            <label>Search Last Name</label><asp:TextBox ID="SearchLastNameTextBox" runat="server" />
+            <label>Search Address 1</label><asp:TextBox ID="SearchAddress1TextBox" runat="server" />
+            <asp:Button ID="SearchEntriesButton" runat="server" Text="Search" CssClass="btn" OnClick="SearchEntriesButton_Click" CausesValidation="false" UseSubmitBehavior="false" />
+            <asp:Button ID="ClearSearchButton" runat="server" Text="Clear" CssClass="btn secondary" OnClick="ClearSearchButton_Click" CausesValidation="false" UseSubmitBehavior="false" />
+        </div>
         <asp:GridView ID="RecentGrid" runat="server" CssClass="grid" AutoGenerateColumns="false" DataKeyNames="EntryId" OnRowCommand="RecentGrid_RowCommand">
             <Columns>
                 <asp:ButtonField Text="Edit" ButtonType="Button" CommandName="EditEntry" CausesValidation="false" />

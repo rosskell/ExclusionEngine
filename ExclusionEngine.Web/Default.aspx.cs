@@ -41,8 +41,23 @@ namespace ExclusionEngine.Web
 
         private void BindRecent()
         {
-            RecentGrid.DataSource = Repository.GetRecentEntriesForUser(UserId);
+            RecentGrid.DataSource = Repository.GetRecentEntriesForUser(
+                UserId,
+                SearchLastNameTextBox.Text.Trim(),
+                SearchAddress1TextBox.Text.Trim());
             RecentGrid.DataBind();
+        }
+
+        protected void SearchEntriesButton_Click(object sender, EventArgs e)
+        {
+            BindRecent();
+        }
+
+        protected void ClearSearchButton_Click(object sender, EventArgs e)
+        {
+            SearchLastNameTextBox.Text = string.Empty;
+            SearchAddress1TextBox.Text = string.Empty;
+            BindRecent();
         }
 
         protected void LogoutButton_Click(object sender, EventArgs e)
