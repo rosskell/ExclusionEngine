@@ -8,6 +8,9 @@ namespace ExclusionEngine.Web
     {
         protected void Page_Load(object sender, EventArgs e)
         {
+            // Reset transient modal script on each request so it only appears immediately after validation.
+            ModalScriptLiteral.Text = string.Empty;
+
             if (Session["UserId"] == null)
             {
                 Response.Redirect("~/Login.aspx");
@@ -89,6 +92,8 @@ namespace ExclusionEngine.Web
         {
             if (e.CommandName != "EditEntry") return;
 
+            ClearPendingCassState();
+
             var rowIndex = Convert.ToInt32(e.CommandArgument);
             var entryId = Convert.ToInt32(RecentGrid.DataKeys[rowIndex].Value);
             var entry = Repository.GetEntryForEdit(UserId, entryId);
@@ -118,6 +123,7 @@ namespace ExclusionEngine.Web
 
         protected void CancelEditButton_Click(object sender, EventArgs e)
         {
+            ClearPendingCassState();
             ResetEditor();
             MessageLabel.Text = "<span class='success'>Edit canceled.</span>";
         }
@@ -137,10 +143,18 @@ namespace ExclusionEngine.Web
 
             Session.Remove("PendingOriginalEntry");
             Session.Remove("PendingStandardizedEntry");
-            ConfirmedStandardized.Value = "false";
-            UseOriginalAddress.Value = "false";
+            ClearPendingCassState();
             ResetEditor();
             BindRecent();
+        }
+
+        private void ClearPendingCassState()
+        {
+            Session.Remove("PendingOriginalEntry");
+            Session.Remove("PendingStandardizedEntry");
+            ConfirmedStandardized.Value = "false";
+            UseOriginalAddress.Value = "false";
+            ModalScriptLiteral.Text = string.Empty;
         }
 
         private void ResetEditor()

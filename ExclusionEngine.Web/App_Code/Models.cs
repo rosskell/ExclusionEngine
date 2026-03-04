@@ -16,6 +16,7 @@ namespace ExclusionEngine.Web
 
     public class CustomerEntryInput
     {
+        public int EntryId { get; set; }
         public int ClientId { get; set; }
         public string CustomerNumber { get; set; }
         public string FirstName { get; set; }

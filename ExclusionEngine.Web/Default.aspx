@@ -3,7 +3,7 @@
     <div class="card">
         <div class="row">
             <h2>Customer Entry</h2>
-            <asp:Button ID="LogoutButton" runat="server" Text="Log out" OnClick="LogoutButton_Click" CssClass="btn secondary" />
+            <asp:Button ID="LogoutButton" runat="server" Text="Log out" OnClick="LogoutButton_Click" CssClass="btn secondary" CausesValidation="false" UseSubmitBehavior="false" />
         </div>
         <asp:Label ID="MessageLabel" runat="server" />
         <div class="form-grid">
@@ -22,7 +22,7 @@
             <asp:HiddenField ID="UseOriginalAddress" runat="server" Value="false" />
             <asp:HiddenField ID="EditingEntryId" runat="server" Value="" />
             <asp:Button ID="ValidateAddressButton" runat="server" Text="Validate + Save" CssClass="btn" OnClick="ValidateAddressButton_Click" />
-            <asp:Button ID="CancelEditButton" runat="server" Text="Cancel Edit" CssClass="btn secondary" OnClick="CancelEditButton_Click" Visible="false" />
+            <asp:Button ID="CancelEditButton" runat="server" Text="Cancel Edit" CssClass="btn secondary" OnClick="CancelEditButton_Click" Visible="false" CausesValidation="false" UseSubmitBehavior="false" />
         </div>
     </div>
 
@@ -42,7 +42,7 @@
         <h3>Recent Entries (Authorized Clients Only)</h3>
         <asp:GridView ID="RecentGrid" runat="server" CssClass="grid" AutoGenerateColumns="false" DataKeyNames="EntryId" OnRowCommand="RecentGrid_RowCommand">
             <Columns>
-                <asp:ButtonField Text="Edit" ButtonType="Button" CommandName="EditEntry" />
+                <asp:ButtonField Text="Edit" ButtonType="Button" CommandName="EditEntry" CausesValidation="false" />
                 <asp:BoundField HeaderText="Client" DataField="ClientName" />
                 <asp:BoundField HeaderText="Customer #" DataField="CustomerNumber" />
                 <asp:BoundField HeaderText="Name" DataField="FullName" />
