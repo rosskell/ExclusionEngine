@@ -6,14 +6,14 @@ function showCassModal(entered, standardized) {
 
 function keepOriginalAndSave() {
   document.getElementById('confirmModal').classList.add('hidden');
-  document.getElementById('MainContent_ConfirmedStandardized').value = 'true';
-  document.getElementById('MainContent_UseOriginalAddress').value = 'true';
-  document.getElementById('MainContent_ValidateAddressButton').click();
+  document.getElementById('ConfirmedStandardized').value = 'true';
+  document.getElementById('UseOriginalAddress').value = 'true';
+  document.getElementById('ValidateAddressButton').click();
 }
 
 function acceptCassChanges() {
   document.getElementById('confirmModal').classList.add('hidden');
-  document.getElementById('MainContent_ConfirmedStandardized').value = 'true';
-  document.getElementById('MainContent_UseOriginalAddress').value = 'false';
-  document.getElementById('MainContent_ValidateAddressButton').click();
+  document.getElementById('ConfirmedStandardized').value = 'true';
+  document.getElementById('UseOriginalAddress').value = 'false';
+  document.getElementById('ValidateAddressButton').click();
 }

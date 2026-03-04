@@ -18,10 +18,10 @@
             <label>State</label><asp:TextBox ID="StateTextBox" runat="server" MaxLength="2" />
             <label>Zip</label><asp:TextBox ID="ZipTextBox" runat="server" MaxLength="10" />
             <label>Email</label><asp:TextBox ID="EmailTextBox" runat="server" TextMode="Email" />
-            <asp:HiddenField ID="ConfirmedStandardized" runat="server" Value="false" />
-            <asp:HiddenField ID="UseOriginalAddress" runat="server" Value="false" />
+            <asp:HiddenField ID="ConfirmedStandardized" runat="server" Value="false" ClientIDMode="Static" />
+            <asp:HiddenField ID="UseOriginalAddress" runat="server" Value="false" ClientIDMode="Static" />
             <asp:HiddenField ID="EditingEntryId" runat="server" Value="" />
-            <asp:Button ID="ValidateAddressButton" runat="server" Text="Validate + Save" CssClass="btn" OnClick="ValidateAddressButton_Click" />
+            <asp:Button ID="ValidateAddressButton" runat="server" Text="Validate + Save" CssClass="btn" OnClick="ValidateAddressButton_Click" ClientIDMode="Static" />
             <asp:Button ID="CancelEditButton" runat="server" Text="Cancel Edit" CssClass="btn secondary" OnClick="CancelEditButton_Click" Visible="false" CausesValidation="false" UseSubmitBehavior="false" />
         </div>
     </div>
