@@ -1,4 +1,5 @@
 using System;
+using System.Configuration;
 
 namespace ExclusionEngine.Web
 {
@@ -6,8 +7,15 @@ namespace ExclusionEngine.Web
     {
         public static CassResult StandardizeAddress(CustomerEntryInput input)
         {
-            // Placeholder for BCC Satori CASS Server integration.
-            // Replace with SOAP/REST call as required by your deployed Satori server.
+            // Placeholder for BCC Satori CASS server integration.
+            // Use these app settings when wiring your real API client.
+            var endpoint = ConfigurationManager.AppSettings["SatoriCassEndpoint"];
+            var username = ConfigurationManager.AppSettings["SatoriCassUsername"];
+            var password = ConfigurationManager.AppSettings["SatoriCassPassword"];
+            _ = endpoint;
+            _ = username;
+            _ = password;
+
             var standardized = new CustomerEntryInput
             {
                 ClientId = input.ClientId,

@@ -15,7 +15,10 @@ namespace ExclusionEngine.Web
         protected global::System.Web.UI.WebControls.TextBox ZipTextBox;
         protected global::System.Web.UI.WebControls.TextBox EmailTextBox;
         protected global::System.Web.UI.WebControls.HiddenField ConfirmedStandardized;
+        protected global::System.Web.UI.WebControls.HiddenField UseOriginalAddress;
+        protected global::System.Web.UI.WebControls.HiddenField EditingEntryId;
         protected global::System.Web.UI.WebControls.Button ValidateAddressButton;
+        protected global::System.Web.UI.WebControls.Button CancelEditButton;
         protected global::System.Web.UI.WebControls.Literal ModalScriptLiteral;
         protected global::System.Web.UI.WebControls.GridView RecentGrid;
     }

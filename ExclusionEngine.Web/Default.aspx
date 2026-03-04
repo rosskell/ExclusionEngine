@@ -19,7 +19,10 @@
             <label>Zip</label><asp:TextBox ID="ZipTextBox" runat="server" MaxLength="10" />
             <label>Email</label><asp:TextBox ID="EmailTextBox" runat="server" TextMode="Email" />
             <asp:HiddenField ID="ConfirmedStandardized" runat="server" Value="false" />
+            <asp:HiddenField ID="UseOriginalAddress" runat="server" Value="false" />
+            <asp:HiddenField ID="EditingEntryId" runat="server" Value="" />
             <asp:Button ID="ValidateAddressButton" runat="server" Text="Validate + Save" CssClass="btn" OnClick="ValidateAddressButton_Click" />
+            <asp:Button ID="CancelEditButton" runat="server" Text="Cancel Edit" CssClass="btn secondary" OnClick="CancelEditButton_Click" Visible="false" />
         </div>
     </div>
 
@@ -28,17 +31,18 @@
             <h3>Confirm Address Changes</h3>
             <p><strong>Entered:</strong> <span id="enteredAddress"></span></p>
             <p><strong>Standardized (CASS):</strong> <span id="cassAddress"></span></p>
-            <button type="button" class="btn" onclick="acceptCassChanges()">Accept & Save</button>
-            <button type="button" class="btn secondary" onclick="closeCassModal()">Keep Original</button>
+            <button type="button" class="btn" onclick="acceptCassChanges()">Accept Standardized & Save</button>
+            <button type="button" class="btn secondary" onclick="keepOriginalAndSave()">Keep Original & Save</button>
         </div>
     </div>
 
     <asp:Literal ID="ModalScriptLiteral" runat="server" />
 
     <div class="card">
-        <h3>Recent Entries</h3>
-        <asp:GridView ID="RecentGrid" runat="server" CssClass="grid" AutoGenerateColumns="false">
+        <h3>Recent Entries (Authorized Clients Only)</h3>
+        <asp:GridView ID="RecentGrid" runat="server" CssClass="grid" AutoGenerateColumns="false" DataKeyNames="EntryId" OnRowCommand="RecentGrid_RowCommand">
             <Columns>
+                <asp:ButtonField Text="Edit" ButtonType="Button" CommandName="EditEntry" />
                 <asp:BoundField HeaderText="Client" DataField="ClientName" />
                 <asp:BoundField HeaderText="Customer #" DataField="CustomerNumber" />
                 <asp:BoundField HeaderText="Name" DataField="FullName" />

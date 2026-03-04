@@ -4,3 +4,5 @@ obj/
 *.user
 *.suo
 *.cache
+packages/
+!**/packages.config
