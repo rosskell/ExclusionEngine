@@ -1,5 +1,6 @@
 using System;
 using System.Configuration;
+using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
 
@@ -11,12 +12,23 @@ namespace ExclusionEngine.Web
         {
             var fallback = BuildFallbackStandardized(input);
             object task = null;
+            var traceEnabled = IsTruthy(ConfigurationManager.AppSettings["SatoriCassTrace"]);
+            var throwOnError = IsTruthy(ConfigurationManager.AppSettings["SatoriCassThrowOnError"]);
 
             try
             {
+                TraceLog(traceEnabled, "Starting CASS standardization.");
                 task = CreateZipTask();
                 if (task == null)
                 {
+                    TraceLog(traceEnabled,
+                        "Unable to create ZIP task COM object. Ensure Mailroom Toolkit COM is installed/registered and bitness matches IIS worker process. " +
+                        "Do not add Interop.MRTKTASKLib.dll as a web project assembly reference.");
+                    if (throwOnError)
+                    {
+                        throw new InvalidOperationException("CASS COM object could not be created. See logs for details.");
+                    }
+
                     return BuildResult(input, fallback);
                 }
 
@@ -26,9 +38,15 @@ namespace ExclusionEngine.Web
 
                 if (!string.IsNullOrWhiteSpace(server))
                 {
+                    TraceLog(traceEnabled, "Configuring MailRoom server: " + server);
                     InvokeSetMailRoomServer(task, server);
                 }
+                else
+                {
+                    TraceLog(traceEnabled, "No SatoriCassMailRoomServer/SatoriCassEndpoint configured; using COM component default server behavior.");
+                }
 
+                TraceLog(traceEnabled, "Preparing ZIP task.");
                 InvokeNoArg(task, "PrepareTask");
                 InvokeNoArg(task, "ClearAddress");
 
@@ -40,11 +58,19 @@ namespace ExclusionEngine.Web
                 SetProperty(task, "ZipCode", input.Zip ?? string.Empty);
                 SetProperty(task, "CarrierRoute", string.Empty);
 
+                TraceLog(traceEnabled, "Sending address to CASS via CheckAddress().");
                 InvokeNoArg(task, "CheckAddress");
 
                 var errorCodes = Convert.ToInt32(GetProperty(task, "ErrorCodes"));
+                TraceLog(traceEnabled, "CASS ErrorCodes returned: " + errorCodes);
                 if (errorCodes >= 100 && errorCodes < 500)
                 {
+                    TraceLog(traceEnabled, "CASS returned error range 100-499; using fallback normalization.");
+                    if (throwOnError)
+                    {
+                        throw new InvalidOperationException("CASS returned error code: " + errorCodes);
+                    }
+
                     return BuildResult(input, fallback);
                 }
 
@@ -64,8 +90,14 @@ namespace ExclusionEngine.Web
 
                 return BuildResult(input, standardized);
             }
-            catch
+            catch (Exception ex)
             {
+                TraceLog(traceEnabled, "CASS call failed: " + ex);
+                if (throwOnError)
+                {
+                    throw;
+                }
+
                 return BuildResult(input, fallback);
             }
             finally
@@ -74,6 +106,7 @@ namespace ExclusionEngine.Web
                 {
                     try
                     {
+                        TraceLog(traceEnabled, "Ending ZIP task.");
                         InvokeNoArg(task, "EndTask");
                     }
                     catch
@@ -86,15 +119,18 @@ namespace ExclusionEngine.Web
 
         private static object CreateZipTask()
         {
+            var configuredProgId = (ConfigurationManager.AppSettings["SatoriCassProgId"] ?? string.Empty).Trim();
             var progIds = new[]
             {
-                "MRTKTASKLib.ZIPTaskClass",
+                configuredProgId,
                 "MRTKTASKLib.ZIPTask",
+                "MRTKTASKLib.ZIPTaskClass",
                 "MailroomToolkitTasks.ZIPTask"
             };
 
             foreach (var progId in progIds)
             {
+                if (string.IsNullOrWhiteSpace(progId)) continue;
                 var type = Type.GetTypeFromProgID(progId, false);
                 if (type != null)
                 {
@@ -193,6 +229,19 @@ namespace ExclusionEngine.Web
         {
             if (string.IsNullOrWhiteSpace(zip)) return string.Empty;
             return zip.Trim();
+        }
+
+        private static bool IsTruthy(string value)
+        {
+            return string.Equals((value ?? string.Empty).Trim(), "1", StringComparison.OrdinalIgnoreCase)
+                || string.Equals((value ?? string.Empty).Trim(), "true", StringComparison.OrdinalIgnoreCase)
+                || string.Equals((value ?? string.Empty).Trim(), "yes", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static void TraceLog(bool enabled, string message)
+        {
+            if (!enabled) return;
+            Trace.WriteLine("[SatoriCassService] " + message);
         }
     }
 }

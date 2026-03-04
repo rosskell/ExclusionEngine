@@ -25,9 +25,10 @@ This repository contains an **ASP.NET Web Forms** application targeting **.NET F
   - `ForgotPassword.aspx` generates a token and sends a reset link to the user email.
   - `ResetPassword.aspx` consumes the token and updates password.
 - Address standardization flow intended for **BCC Satori CASS Server** integration:
-  - Current implementation contains a placeholder in `SatoriCassService`.
+  - Uses a Mailroom Toolkit COM ZIP task call path in `SatoriCassService` (late-bound).
   - Before saving, entered and standardized addresses are compared.
   - The modal allows users to **accept standardized** or **keep original** and save.
+  - If COM is unavailable/erroring, flow falls back to local normalization unless strict mode is enabled.
 
 ## Project layout
 
@@ -63,10 +64,28 @@ Demo seed account (for local testing):
 
 ## BCC Satori CASS hookup
 
-`SatoriCassService.StandardizeAddress(...)` now attempts to call the Mailroom Toolkit COM ZIP task (as shown in your WinForms sample) via late binding when the COM component is installed on the web server.
+`SatoriCassService.StandardizeAddress(...)` uses the same call sequence from your WinForms sample:
+- create ZIP task COM object
+- set MailRoom server
+- `PrepareTask`, `ClearAddress`
+- set address fields
+- `CheckAddress`
+- inspect `ErrorCodes`
+- `EndTask`
 
-Configure one of these app settings:
+### Required config
 - `SatoriCassMailRoomServer` (preferred, e.g. `10.0.2.37:5150`)
-- `SatoriCassEndpoint` (legacy fallback key)
+- `SatoriCassProgId` (default `MRTKTASKLib.ZIPTask`)
 
-If the COM task is not installed/reachable, or the returned CASS error code is in the 100-499 range, the app gracefully falls back to local normalization logic so entry save flow still works.
+### Optional config
+- `SatoriCassEndpoint` (legacy fallback server key)
+- `SatoriCassTrace` (`true`/`false`) to emit `Trace` diagnostics
+- `SatoriCassThrowOnError` (`true`/`false`) to fail requests instead of fallback
+
+### Important: do **not** reference `Interop.MRTKTASKLib.dll` in this WebForms project
+The `BadImageFormatException` you saw is a bitness/load-context problem. This app intentionally uses late-bound COM activation (`Type.GetTypeFromProgID`) so it does not require interop DLL loading in ASP.NET.
+
+If COM activation still fails, verify:
+- Mailroom Toolkit COM is registered on the web host.
+- IIS/IIS Express process bitness matches the COM registration (x86 vs x64).
+- For IIS Express in Visual Studio, toggle **Use 64-bit IIS Express** if needed and retry.
