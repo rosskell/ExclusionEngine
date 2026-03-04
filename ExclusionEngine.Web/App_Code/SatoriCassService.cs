@@ -15,6 +15,7 @@ namespace ExclusionEngine.Web
             object task = null;
             var traceEnabled = IsTruthy(ConfigurationManager.AppSettings["SatoriCassTrace"]);
             var throwOnError = IsTruthy(ConfigurationManager.AppSettings["SatoriCassThrowOnError"]);
+            var requireServerAssignment = IsTruthy(ConfigurationManager.AppSettings["SatoriCassRequireServerAssignment"]);
 
             try
             {
@@ -40,7 +41,17 @@ namespace ExclusionEngine.Web
                 if (!string.IsNullOrWhiteSpace(server))
                 {
                     TraceLog(traceEnabled, "Configuring MailRoom server: " + server);
-                    InvokeSetMailRoomServer(task, server);
+                    var assigned = ConfigureMailRoomServer(task, server, traceEnabled);
+                    if (!assigned)
+                    {
+                        var msg = "Failed to assign MailRoom server on ZIP task object. " +
+                                  "Tried method/property variants for MailRoomServer.";
+                        TraceLog(traceEnabled, msg);
+                        if (requireServerAssignment || throwOnError)
+                        {
+                            throw new InvalidOperationException(msg);
+                        }
+                    }
                 }
                 else
                 {
@@ -193,21 +204,61 @@ namespace ExclusionEngine.Web
             return null;
         }
 
-        private static void InvokeSetMailRoomServer(object task, string server)
+        private static bool ConfigureMailRoomServer(object task, string server, bool traceEnabled)
         {
-            var args = new object[] { server };
-            var modifiers = new ParameterModifier(1);
-            modifiers[0] = true;
+            var type = task.GetType();
 
-            task.GetType().InvokeMember(
-                "set_MailRoomServer",
-                BindingFlags.Instance | BindingFlags.Public | BindingFlags.InvokeMethod,
-                null,
-                task,
-                args,
-                new[] { modifiers },
-                null,
-                null);
+            // 1) COM-style by-ref setter method: set_MailRoomServer(ref string)
+            try
+            {
+                var method = type.GetMethod("set_MailRoomServer", BindingFlags.Instance | BindingFlags.Public);
+                if (method != null)
+                {
+                    var args = new object[] { server };
+                    method.Invoke(task, args);
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                TraceLog(traceEnabled, "set_MailRoomServer(ref string) failed: " + ex.Message);
+            }
+
+            // 2) Direct property setter: MailRoomServer = "host:port"
+            try
+            {
+                var prop = type.GetProperty("MailRoomServer", BindingFlags.Instance | BindingFlags.Public);
+                if (prop != null && prop.CanWrite)
+                {
+                    prop.SetValue(task, server, null);
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                TraceLog(traceEnabled, "MailRoomServer property setter failed: " + ex.Message);
+            }
+
+            // 3) Alternative method names seen in some interop wrappers
+            var altNames = new[] { "SetMailRoomServer", "Set_MailRoomServer" };
+            foreach (var name in altNames)
+            {
+                try
+                {
+                    var m = type.GetMethod(name, BindingFlags.Instance | BindingFlags.Public);
+                    if (m != null)
+                    {
+                        m.Invoke(task, new object[] { server });
+                        return true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    TraceLog(traceEnabled, name + " failed: " + ex.Message);
+                }
+            }
+
+            return false;
         }
 
         private static void InvokeNoArg(object instance, string methodName)

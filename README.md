@@ -84,6 +84,7 @@ Demo seed account (for local testing):
 - `SatoriCassEndpoint` (legacy fallback server key)
 - `SatoriCassTrace` (`true`/`false`) to emit `Trace` diagnostics
 - `SatoriCassThrowOnError` (`true`/`false`) to fail requests instead of fallback
+- `SatoriCassRequireServerAssignment` (`true`/`false`) to require MailRoom server assignment before `PrepareTask`
 
 ### Important: do **not** reference `Interop.MRTKTASKLib.dll` in this WebForms project
 The `BadImageFormatException` you saw is a bitness/load-context problem. This app intentionally uses late-bound COM activation (`Type.GetTypeFromProgID`) so it does not require interop DLL loading in ASP.NET.
@@ -111,3 +112,12 @@ That usually means one of:
 - interop DLL exists but not loadable in current process architecture
 
 Set `SatoriCassTrace=true` and check output to see which step is failing.
+
+
+### MailRoom server assignment behavior
+When `SatoriCassMailRoomServer` is set, the app now tries these assignment patterns in order:
+1. `set_MailRoomServer(ref string)`
+2. `MailRoomServer` writable property
+3. `SetMailRoomServer(string)` / `Set_MailRoomServer(string)`
+
+Enable `SatoriCassTrace=true` to see which assignment path succeeds.
