@@ -16,7 +16,8 @@ namespace ExclusionEngine.Web
                 return;
             }
 
-            AdminUsersLink.Visible = IsAdmin;
+            UserAdminButton.Visible = IsAdmin;
+            ClientAdminButton.Visible = IsAdmin;
 
             if (!IsPostBack)
             {
@@ -91,35 +92,53 @@ namespace ExclusionEngine.Web
 
         protected void RecentGrid_RowCommand(object sender, GridViewCommandEventArgs e)
         {
-            if (e.CommandName != "EditEntry") return;
-
-            ClearPendingCassState();
-
             var rowIndex = Convert.ToInt32(e.CommandArgument);
             var entryId = Convert.ToInt32(RecentGrid.DataKeys[rowIndex].Value);
-            var entry = Repository.GetEntryForEdit(UserId, entryId);
 
-            if (entry == null)
+            if (e.CommandName == "EditEntry")
             {
-                MessageLabel.Text = "<span class='error'>Entry not found or not authorized.</span>";
+                ClearPendingCassState();
+                var entry = Repository.GetEntryForEdit(UserId, entryId);
+
+                if (entry == null)
+                {
+                    MessageLabel.Text = "<span class='error'>Entry not found or not authorized.</span>";
+                    return;
+                }
+
+                EditingEntryId.Value = entry.EntryId.ToString();
+                ClientDropDown.SelectedValue = entry.ClientId.ToString();
+                CustomerNumberTextBox.Text = entry.CustomerNumber;
+                FirstNameTextBox.Text = entry.FirstName;
+                LastNameTextBox.Text = entry.LastName;
+                Address1TextBox.Text = entry.Address1;
+                Address2TextBox.Text = entry.Address2;
+                CityTextBox.Text = entry.City;
+                StateTextBox.Text = entry.State;
+                ZipTextBox.Text = entry.Zip;
+                EmailTextBox.Text = entry.Email;
+
+                ValidateAddressButton.Text = "Validate + Update";
+                CancelEditButton.Visible = true;
+                MessageLabel.Text = "<span class='warn'>Editing existing record. Save to update.</span>";
                 return;
             }
 
-            EditingEntryId.Value = entry.EntryId.ToString();
-            ClientDropDown.SelectedValue = entry.ClientId.ToString();
-            CustomerNumberTextBox.Text = entry.CustomerNumber;
-            FirstNameTextBox.Text = entry.FirstName;
-            LastNameTextBox.Text = entry.LastName;
-            Address1TextBox.Text = entry.Address1;
-            Address2TextBox.Text = entry.Address2;
-            CityTextBox.Text = entry.City;
-            StateTextBox.Text = entry.State;
-            ZipTextBox.Text = entry.Zip;
-            EmailTextBox.Text = entry.Email;
-
-            ValidateAddressButton.Text = "Validate + Update";
-            CancelEditButton.Visible = true;
-            MessageLabel.Text = "<span class='warn'>Editing existing record. Save to update.</span>";
+            if (e.CommandName == "DeleteEntry")
+            {
+                try
+                {
+                    Repository.DeleteEntry(UserId, entryId);
+                    ClearPendingCassState();
+                    ResetEditor();
+                    BindRecent();
+                    MessageLabel.Text = "<span class='success'>Customer entry deleted.</span>";
+                }
+                catch (Exception ex)
+                {
+                    MessageLabel.Text = $"<span class='error'>{HttpUtility.HtmlEncode(ex.Message)}</span>";
+                }
+            }
         }
 
         protected void CancelEditButton_Click(object sender, EventArgs e)

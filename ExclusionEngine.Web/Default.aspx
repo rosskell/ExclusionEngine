@@ -4,7 +4,8 @@
         <div class="row">
             <div>
                 <h2>Customer Entry</h2>
-                <asp:HyperLink ID="AdminUsersLink" runat="server" NavigateUrl="~/AdminUsers.aspx" Visible="false">Admin: Users</asp:HyperLink>
+                <asp:Button ID="UserAdminButton" runat="server" Text="User Admin" PostBackUrl="~/AdminUsers.aspx" CssClass="btn secondary" Visible="false" CausesValidation="false" UseSubmitBehavior="false" />
+                <asp:Button ID="ClientAdminButton" runat="server" Text="Client Admin" PostBackUrl="~/ClientAdmin.aspx" CssClass="btn secondary" Visible="false" CausesValidation="false" UseSubmitBehavior="false" />
             </div>
             <asp:Button ID="LogoutButton" runat="server" Text="Log out" OnClick="LogoutButton_Click" CssClass="btn secondary" CausesValidation="false" UseSubmitBehavior="false" />
         </div>
@@ -46,6 +47,7 @@
         <asp:GridView ID="RecentGrid" runat="server" CssClass="grid" AutoGenerateColumns="false" DataKeyNames="EntryId" OnRowCommand="RecentGrid_RowCommand">
             <Columns>
                 <asp:ButtonField Text="Edit" ButtonType="Button" CommandName="EditEntry" CausesValidation="false" />
+                <asp:ButtonField Text="Delete" ButtonType="Button" CommandName="DeleteEntry" CausesValidation="false" />
                 <asp:BoundField HeaderText="Client" DataField="ClientName" />
                 <asp:BoundField HeaderText="Customer #" DataField="CustomerNumber" />
                 <asp:BoundField HeaderText="Name" DataField="FullName" />

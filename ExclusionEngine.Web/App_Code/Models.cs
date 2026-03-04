@@ -8,6 +8,7 @@ namespace ExclusionEngine.Web
         public string Username { get; set; }
         public string Email { get; set; }
         public bool IsAdmin { get; set; }
+        public bool IsDisabled { get; set; }
     }
 
     public class UserAdminModel
@@ -16,6 +17,7 @@ namespace ExclusionEngine.Web
         public string Username { get; set; }
         public string Email { get; set; }
         public bool IsAdmin { get; set; }
+        public bool IsDisabled { get; set; }
         public List<int> ClientIds { get; set; } = new List<int>();
     }
 

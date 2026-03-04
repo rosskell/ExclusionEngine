@@ -71,6 +71,7 @@
     <Content Include="ResetPassword.aspx" />
     <Content Include="ForgotPassword.aspx" />
     <Content Include="AdminUsers.aspx" />
+    <Content Include="ClientAdmin.aspx" />
     <Content Include="Global.asax" />
     <Content Include="Login.aspx" />
     <Content Include="Scripts\site.js" />
@@ -87,11 +88,16 @@
       <SubType>ASPXCodeBehind</SubType>
       <DependentUpon>AdminUsers.aspx</DependentUpon>
     </Compile>
+    <Compile Include="ClientAdmin.aspx.cs">
+      <SubType>ASPXCodeBehind</SubType>
+      <DependentUpon>ClientAdmin.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Default.aspx.cs">
       <SubType>ASPXCodeBehind</SubType>
       <DependentUpon>Default.aspx</DependentUpon>
     </Compile>
     <Compile Include="Default.aspx.designer.cs" />
+    <Compile Include="ClientAdmin.aspx.designer.cs" />
     <Compile Include="AdminUsers.aspx.designer.cs" />
     <Compile Include="ForgotPassword.aspx.cs">
       <SubType>ASPXCodeBehind</SubType>

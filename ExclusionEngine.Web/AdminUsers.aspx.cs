@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Web.UI.WebControls;
@@ -26,6 +25,30 @@ namespace ExclusionEngine.Web
             {
                 BindClients();
                 BindUsers();
+                SyncClientSelectionEnabled();
+            }
+        }
+
+        protected void BackToDefaultButton_Click(object sender, EventArgs e)
+        {
+            Response.Redirect("~/Default.aspx");
+        }
+
+        protected void IsAdminCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            SyncClientSelectionEnabled();
+        }
+
+        private void SyncClientSelectionEnabled()
+        {
+            var admin = IsAdminCheckBox.Checked;
+            ClientCheckBoxList.Enabled = !admin;
+            if (admin)
+            {
+                foreach (ListItem item in ClientCheckBoxList.Items)
+                {
+                    item.Selected = false;
+                }
             }
         }
 
@@ -48,10 +71,12 @@ namespace ExclusionEngine.Web
             var username = AdminUsernameTextBox.Text.Trim();
             var email = AdminEmailTextBox.Text.Trim();
             var password = AdminPasswordTextBox.Text;
-            var clientIds = ClientCheckBoxList.Items.Cast<ListItem>()
-                .Where(i => i.Selected)
-                .Select(i => int.Parse(i.Value))
-                .ToList();
+            var clientIds = IsAdminCheckBox.Checked
+                ? new System.Collections.Generic.List<int>()
+                : ClientCheckBoxList.Items.Cast<ListItem>()
+                    .Where(i => i.Selected)
+                    .Select(i => int.Parse(i.Value))
+                    .ToList();
 
             if (string.IsNullOrWhiteSpace(username))
             {
@@ -80,6 +105,7 @@ namespace ExclusionEngine.Web
                         Username = username,
                         Email = email,
                         IsAdmin = IsAdminCheckBox.Checked,
+                        IsDisabled = IsDisabledCheckBox.Checked,
                         ClientIds = clientIds
                     }, password);
 
@@ -87,12 +113,19 @@ namespace ExclusionEngine.Web
                 }
                 else
                 {
+                    var editUserId = int.Parse(EditingUserId.Value);
+                    if (Session["UserId"] != null && editUserId == Convert.ToInt32(Session["UserId"]))
+                    {
+                        IsDisabledCheckBox.Checked = false;
+                    }
+
                     Repository.UpdateUser(new UserAdminModel
                     {
-                        UserId = int.Parse(EditingUserId.Value),
+                        UserId = editUserId,
                         Username = username,
                         Email = email,
                         IsAdmin = IsAdminCheckBox.Checked,
+                        IsDisabled = IsDisabledCheckBox.Checked,
                         ClientIds = clientIds
                     }, password);
 
@@ -110,29 +143,77 @@ namespace ExclusionEngine.Web
 
         protected void UsersGrid_RowCommand(object sender, GridViewCommandEventArgs e)
         {
-            if (e.CommandName != "EditUser") return;
-
             var rowIndex = Convert.ToInt32(e.CommandArgument);
             var userId = Convert.ToInt32(UsersGrid.DataKeys[rowIndex].Value);
-            var user = Repository.GetUserForAdmin(userId);
-            if (user == null)
+
+            if (e.CommandName == "EditUser")
             {
-                AdminMessageLabel.Text = "<span class='error'>User not found.</span>";
+                var user = Repository.GetUserForAdmin(userId);
+                if (user == null)
+                {
+                    AdminMessageLabel.Text = "<span class='error'>User not found.</span>";
+                    return;
+                }
+
+                EditingUserId.Value = user.UserId.ToString();
+                AdminUsernameTextBox.Text = user.Username;
+                AdminEmailTextBox.Text = user.Email;
+                AdminPasswordTextBox.Text = string.Empty;
+                IsAdminCheckBox.Checked = user.IsAdmin;
+                IsDisabledCheckBox.Checked = user.IsDisabled;
+
+                foreach (ListItem item in ClientCheckBoxList.Items)
+                {
+                    item.Selected = user.ClientIds.Contains(int.Parse(item.Value));
+                }
+
+                SyncClientSelectionEnabled();
+                SaveUserButton.Text = "Update User";
                 return;
             }
 
-            EditingUserId.Value = user.UserId.ToString();
-            AdminUsernameTextBox.Text = user.Username;
-            AdminEmailTextBox.Text = user.Email;
-            AdminPasswordTextBox.Text = string.Empty;
-            IsAdminCheckBox.Checked = user.IsAdmin;
-
-            foreach (ListItem item in ClientCheckBoxList.Items)
+            if (e.CommandName == "ToggleDisable")
             {
-                item.Selected = user.ClientIds.Contains(int.Parse(item.Value));
+                var user = Repository.GetUserForAdmin(userId);
+                if (user == null)
+                {
+                    AdminMessageLabel.Text = "<span class='error'>User not found.</span>";
+                    return;
+                }
+
+                if (Session["UserId"] != null && userId == Convert.ToInt32(Session["UserId"]))
+                {
+                    AdminMessageLabel.Text = "<span class='error'>You cannot disable your own account.</span>";
+                    return;
+                }
+
+                Repository.DisableUser(userId, !user.IsDisabled);
+                BindUsers();
+                AdminMessageLabel.Text = user.IsDisabled
+                    ? "<span class='success'>User enabled.</span>"
+                    : "<span class='success'>User disabled.</span>";
+                return;
             }
 
-            SaveUserButton.Text = "Update User";
+            if (e.CommandName == "DeleteUser")
+            {
+                if (Session["UserId"] != null && userId == Convert.ToInt32(Session["UserId"]))
+                {
+                    AdminMessageLabel.Text = "<span class='error'>You cannot delete your own account.</span>";
+                    return;
+                }
+
+                try
+                {
+                    Repository.DeleteUser(userId);
+                    BindUsers();
+                    AdminMessageLabel.Text = "<span class='success'>User deleted.</span>";
+                }
+                catch (Exception ex)
+                {
+                    AdminMessageLabel.Text = $"<span class='error'>{HttpUtility.HtmlEncode(ex.Message)}</span>";
+                }
+            }
         }
 
         protected void CancelUserEditButton_Click(object sender, EventArgs e)
@@ -148,10 +229,12 @@ namespace ExclusionEngine.Web
             AdminEmailTextBox.Text = string.Empty;
             AdminPasswordTextBox.Text = string.Empty;
             IsAdminCheckBox.Checked = false;
+            IsDisabledCheckBox.Checked = false;
             foreach (ListItem item in ClientCheckBoxList.Items)
             {
                 item.Selected = false;
             }
+            SyncClientSelectionEnabled();
             SaveUserButton.Text = "Save User";
         }
     }

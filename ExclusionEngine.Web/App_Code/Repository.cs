@@ -23,6 +23,7 @@ CREATE TABLE dbo.Users (
     PasswordHash NVARCHAR(200) NOT NULL,
     Email NVARCHAR(200) NULL,
     IsAdmin BIT NOT NULL DEFAULT(0),
+    IsDisabled BIT NOT NULL DEFAULT(0),
     PasswordResetToken NVARCHAR(200) NULL,
     PasswordResetExpiresUtc DATETIME2 NULL
 );
@@ -63,6 +64,8 @@ IF COL_LENGTH('dbo.Users', 'Email') IS NULL
     ALTER TABLE dbo.Users ADD Email NVARCHAR(200) NULL;
 IF COL_LENGTH('dbo.Users', 'IsAdmin') IS NULL
     ALTER TABLE dbo.Users ADD IsAdmin BIT NOT NULL CONSTRAINT DF_Users_IsAdmin DEFAULT(0);
+IF COL_LENGTH('dbo.Users', 'IsDisabled') IS NULL
+    ALTER TABLE dbo.Users ADD IsDisabled BIT NOT NULL CONSTRAINT DF_Users_IsDisabled DEFAULT(0);
 IF COL_LENGTH('dbo.Users', 'PasswordResetToken') IS NULL
     ALTER TABLE dbo.Users ADD PasswordResetToken NVARCHAR(200) NULL;
 IF COL_LENGTH('dbo.Users', 'PasswordResetExpiresUtc') IS NULL
@@ -80,11 +83,15 @@ IF COL_LENGTH('dbo.Users', 'PasswordResetExpiresUtc') IS NULL
                 var cmd = new SqlCommand(@"
 IF NOT EXISTS (SELECT 1 FROM dbo.Users WHERE Username = 'demo')
 BEGIN
-    INSERT INTO dbo.Users (Username, PasswordHash, Email, IsAdmin) VALUES ('demo', @demoPasswordHash, 'demo@example.com', 1);
+    INSERT INTO dbo.Users (Username, PasswordHash, Email, IsAdmin, IsDisabled) VALUES ('demo', @demoPasswordHash, 'demo@example.com', 1, 0);
 END
 ELSE
 BEGIN
-    UPDATE dbo.Users SET Email = COALESCE(NULLIF(Email,''), 'demo@example.com') WHERE Username = 'demo';
+    UPDATE dbo.Users 
+    SET Email = COALESCE(NULLIF(Email,''), 'demo@example.com'),
+        IsAdmin = 1,
+        IsDisabled = 0
+    WHERE Username = 'demo';
 END
 IF NOT EXISTS (SELECT 1 FROM dbo.Clients WHERE ClientCode = 'CLI-ALPHA')
 BEGIN
@@ -93,26 +100,27 @@ END
 IF NOT EXISTS (SELECT 1 FROM dbo.Clients WHERE ClientCode = 'CLI-BETA')
 BEGIN
     INSERT INTO dbo.Clients (ClientCode, ClientName) VALUES ('CLI-BETA', 'Beta Retail');
-END
-IF EXISTS (SELECT 1 FROM dbo.Users WHERE Username = 'demo')
-BEGIN
-    DECLARE @UserId INT = (SELECT UserId FROM dbo.Users WHERE Username = 'demo');
-    INSERT INTO dbo.UserClients (UserId, ClientId)
-    SELECT @UserId, c.ClientId
-    FROM dbo.Clients c
-    WHERE NOT EXISTS (
-        SELECT 1 FROM dbo.UserClients uc WHERE uc.UserId = @UserId AND uc.ClientId = c.ClientId
-    );
 END", conn);
                 cmd.Parameters.AddWithValue("@demoPasswordHash", Security.HashPassword("demo123"));
                 cmd.ExecuteNonQuery();
             }
         }
 
+        public static bool IsAdminUser(int userId)
+        {
+            using (var conn = new SqlConnection(ConnectionString))
+            using (var cmd = new SqlCommand("SELECT CASE WHEN IsAdmin = 1 THEN 1 ELSE 0 END FROM dbo.Users WHERE UserId=@u", conn))
+            {
+                conn.Open();
+                cmd.Parameters.AddWithValue("@u", userId);
+                return Convert.ToInt32(cmd.ExecuteScalar()) == 1;
+            }
+        }
+
         public static UserModel ValidateUser(string username, string password)
         {
             using (var conn = new SqlConnection(ConnectionString))
-            using (var cmd = new SqlCommand("SELECT UserId, Username, PasswordHash, COALESCE(Email,''), IsAdmin FROM dbo.Users WHERE Username = @u", conn))
+            using (var cmd = new SqlCommand("SELECT UserId, Username, PasswordHash, COALESCE(Email,''), IsAdmin, IsDisabled FROM dbo.Users WHERE Username = @u", conn))
             {
                 conn.Open();
                 cmd.Parameters.AddWithValue("@u", username ?? string.Empty);
@@ -120,6 +128,8 @@ END", conn);
                 {
                     if (!reader.Read()) return null;
                     var hash = reader.GetString(2);
+                    var disabled = reader.GetBoolean(5);
+                    if (disabled) return null;
                     if (!Security.VerifyPassword(password, hash)) return null;
 
                     return new UserModel
@@ -127,7 +137,8 @@ END", conn);
                         UserId = reader.GetInt32(0),
                         Username = reader.GetString(1),
                         Email = reader.GetString(3),
-                        IsAdmin = reader.GetBoolean(4)
+                        IsAdmin = reader.GetBoolean(4),
+                        IsDisabled = disabled
                     };
                 }
             }
@@ -157,8 +168,91 @@ END", conn);
             return result;
         }
 
+        public static ClientModel GetClientById(int clientId)
+        {
+            using (var conn = new SqlConnection(ConnectionString))
+            using (var cmd = new SqlCommand("SELECT ClientId, ClientCode, ClientName FROM dbo.Clients WHERE ClientId=@id", conn))
+            {
+                conn.Open();
+                cmd.Parameters.AddWithValue("@id", clientId);
+                using (var reader = cmd.ExecuteReader())
+                {
+                    if (!reader.Read()) return null;
+                    return new ClientModel
+                    {
+                        ClientId = reader.GetInt32(0),
+                        ClientCode = reader.GetString(1),
+                        ClientName = reader.GetString(2)
+                    };
+                }
+            }
+        }
+
+        public static int CreateClient(ClientModel client)
+        {
+            using (var conn = new SqlConnection(ConnectionString))
+            using (var cmd = new SqlCommand(@"
+INSERT INTO dbo.Clients(ClientCode, ClientName)
+VALUES(@code, @name);
+SELECT CAST(SCOPE_IDENTITY() AS INT);", conn))
+            {
+                conn.Open();
+                cmd.Parameters.AddWithValue("@code", client.ClientCode ?? string.Empty);
+                cmd.Parameters.AddWithValue("@name", client.ClientName ?? string.Empty);
+                return Convert.ToInt32(cmd.ExecuteScalar());
+            }
+        }
+
+        public static void UpdateClient(ClientModel client)
+        {
+            using (var conn = new SqlConnection(ConnectionString))
+            using (var cmd = new SqlCommand("UPDATE dbo.Clients SET ClientCode=@code, ClientName=@name WHERE ClientId=@id", conn))
+            {
+                conn.Open();
+                cmd.Parameters.AddWithValue("@id", client.ClientId);
+                cmd.Parameters.AddWithValue("@code", client.ClientCode ?? string.Empty);
+                cmd.Parameters.AddWithValue("@name", client.ClientName ?? string.Empty);
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        public static void DeleteClient(int clientId)
+        {
+            using (var conn = new SqlConnection(ConnectionString))
+            {
+                conn.Open();
+                using (var tx = conn.BeginTransaction())
+                {
+                using (var delMappings = new SqlCommand("DELETE FROM dbo.UserClients WHERE ClientId=@id", conn, tx))
+                {
+                    delMappings.Parameters.AddWithValue("@id", clientId);
+                    delMappings.ExecuteNonQuery();
+                }
+
+                using (var delEntries = new SqlCommand("DELETE FROM dbo.CustomerEntries WHERE ClientId=@id", conn, tx))
+                {
+                    delEntries.Parameters.AddWithValue("@id", clientId);
+                    delEntries.ExecuteNonQuery();
+                }
+
+                using (var delClient = new SqlCommand("DELETE FROM dbo.Clients WHERE ClientId=@id", conn, tx))
+                {
+                    delClient.Parameters.AddWithValue("@id", clientId);
+                    delClient.ExecuteNonQuery();
+                }
+
+                    tx.Commit();
+                }
+            }
+        }
+
         public static List<ClientModel> GetClientsForUser(int userId)
         {
+            if (IsAdminUser(userId))
+            {
+                return GetAllClients();
+            }
+
             var result = new List<ClientModel>();
             using (var conn = new SqlConnection(ConnectionString))
             using (var cmd = new SqlCommand(@"
@@ -189,6 +283,8 @@ ORDER BY c.ClientName", conn))
 
         public static bool UserHasClientAccess(int userId, int clientId)
         {
+            if (IsAdminUser(userId)) return true;
+
             using (var conn = new SqlConnection(ConnectionString))
             using (var cmd = new SqlCommand(@"
 SELECT CASE WHEN EXISTS (
@@ -239,21 +335,23 @@ VALUES
 SELECT ce.EntryId, ce.ClientId, ce.CustomerNumber, ce.FirstName, ce.LastName,
        ce.Address1, ce.Address2, ce.City, ce.State, ce.Zip, ce.Email
 FROM dbo.CustomerEntries ce
-INNER JOIN dbo.UserClients uc ON uc.ClientId = ce.ClientId AND uc.UserId = @u
+INNER JOIN dbo.Clients c ON c.ClientId = ce.ClientId
 WHERE ce.EntryId = @entryId", conn))
             {
                 conn.Open();
-                cmd.Parameters.AddWithValue("@u", userId);
                 cmd.Parameters.AddWithValue("@entryId", entryId);
 
                 using (var reader = cmd.ExecuteReader())
                 {
                     if (!reader.Read()) return null;
 
+                    var clientId = reader.GetInt32(1);
+                    if (!UserHasClientAccess(userId, clientId)) return null;
+
                     return new CustomerEntryInput
                     {
                         EntryId = reader.GetInt32(0),
-                        ClientId = reader.GetInt32(1),
+                        ClientId = clientId,
                         CustomerNumber = reader.GetString(2),
                         FirstName = reader.GetString(3),
                         LastName = reader.GetString(4),
@@ -277,23 +375,20 @@ WHERE ce.EntryId = @entryId", conn))
 
             using (var conn = new SqlConnection(ConnectionString))
             using (var cmd = new SqlCommand(@"
-UPDATE ce
-SET ce.ClientId = @c,
-    ce.CustomerNumber = @n,
-    ce.FirstName = @fn,
-    ce.LastName = @ln,
-    ce.Address1 = @a1,
-    ce.Address2 = @a2,
-    ce.City = @city,
-    ce.State = @st,
-    ce.Zip = @zip,
-    ce.Email = @email
-FROM dbo.CustomerEntries ce
-INNER JOIN dbo.UserClients uc ON uc.ClientId = ce.ClientId AND uc.UserId = @u
-WHERE ce.EntryId = @entryId", conn))
+UPDATE dbo.CustomerEntries
+SET ClientId = @c,
+    CustomerNumber = @n,
+    FirstName = @fn,
+    LastName = @ln,
+    Address1 = @a1,
+    Address2 = @a2,
+    City = @city,
+    State = @st,
+    Zip = @zip,
+    Email = @email
+WHERE EntryId = @entryId", conn))
             {
                 conn.Open();
-                cmd.Parameters.AddWithValue("@u", userId);
                 cmd.Parameters.AddWithValue("@entryId", entryId);
                 cmd.Parameters.AddWithValue("@c", input.ClientId);
                 cmd.Parameters.AddWithValue("@n", input.CustomerNumber ?? string.Empty);
@@ -309,8 +404,25 @@ WHERE ce.EntryId = @entryId", conn))
                 var affected = cmd.ExecuteNonQuery();
                 if (affected == 0)
                 {
-                    throw new InvalidOperationException("Entry not found or not authorized.");
+                    throw new InvalidOperationException("Entry not found.");
                 }
+            }
+        }
+
+        public static void DeleteEntry(int userId, int entryId)
+        {
+            var existing = GetEntryForEdit(userId, entryId);
+            if (existing == null)
+            {
+                throw new InvalidOperationException("Entry not found or not authorized.");
+            }
+
+            using (var conn = new SqlConnection(ConnectionString))
+            using (var cmd = new SqlCommand("DELETE FROM dbo.CustomerEntries WHERE EntryId=@entryId", conn))
+            {
+                conn.Open();
+                cmd.Parameters.AddWithValue("@entryId", entryId);
+                cmd.ExecuteNonQuery();
             }
         }
 
@@ -328,12 +440,15 @@ SELECT TOP 20
     ce.CreatedAt
 FROM dbo.CustomerEntries ce
 INNER JOIN dbo.Clients c ON ce.ClientId = c.ClientId
-INNER JOIN dbo.UserClients uc ON uc.ClientId = ce.ClientId
-WHERE uc.UserId = @u
+WHERE ce.ClientId IN (
+    SELECT ClientId FROM dbo.UserClients WHERE UserId = @u
+)
+OR @isAdmin = 1
 ORDER BY ce.CreatedAt DESC", conn))
             {
                 conn.Open();
                 cmd.Parameters.AddWithValue("@u", userId);
+                cmd.Parameters.AddWithValue("@isAdmin", IsAdminUser(userId));
                 var dt = new DataTable();
                 dt.Load(cmd.ExecuteReader());
                 return dt;
@@ -349,14 +464,17 @@ SELECT
     u.Username,
     COALESCE(u.Email, '') AS Email,
     u.IsAdmin,
-    STUFF((
-        SELECT ', ' + c.ClientCode
-        FROM dbo.UserClients uc2
-        INNER JOIN dbo.Clients c ON c.ClientId = uc2.ClientId
-        WHERE uc2.UserId = u.UserId
-        ORDER BY c.ClientCode
-        FOR XML PATH(''), TYPE
-    ).value('.', 'nvarchar(max)'), 1, 2, '') AS ClientCodes
+    u.IsDisabled,
+    CASE WHEN u.IsAdmin = 1 THEN '[ALL CLIENTS]'
+         ELSE STUFF((
+            SELECT ', ' + c.ClientCode
+            FROM dbo.UserClients uc2
+            INNER JOIN dbo.Clients c ON c.ClientId = uc2.ClientId
+            WHERE uc2.UserId = u.UserId
+            ORDER BY c.ClientCode
+            FOR XML PATH(''), TYPE
+         ).value('.', 'nvarchar(max)'), 1, 2, '')
+    END AS ClientCodes
 FROM dbo.Users u
 ORDER BY u.Username", conn))
             {
@@ -374,7 +492,7 @@ ORDER BY u.Username", conn))
                 conn.Open();
                 UserAdminModel model = null;
 
-                using (var cmd = new SqlCommand("SELECT UserId, Username, COALESCE(Email,''), IsAdmin FROM dbo.Users WHERE UserId=@id", conn))
+                using (var cmd = new SqlCommand("SELECT UserId, Username, COALESCE(Email,''), IsAdmin, IsDisabled FROM dbo.Users WHERE UserId=@id", conn))
                 {
                     cmd.Parameters.AddWithValue("@id", userId);
                     using (var reader = cmd.ExecuteReader())
@@ -385,7 +503,8 @@ ORDER BY u.Username", conn))
                             UserId = reader.GetInt32(0),
                             Username = reader.GetString(1),
                             Email = reader.GetString(2),
-                            IsAdmin = reader.GetBoolean(3)
+                            IsAdmin = reader.GetBoolean(3),
+                            IsDisabled = reader.GetBoolean(4)
                         };
                     }
                 }
@@ -415,18 +534,19 @@ ORDER BY u.Username", conn))
                 {
                     int userId;
                     using (var cmd = new SqlCommand(@"
-INSERT INTO dbo.Users(Username, PasswordHash, Email, IsAdmin)
-VALUES(@username, @passwordHash, @email, @isAdmin);
+INSERT INTO dbo.Users(Username, PasswordHash, Email, IsAdmin, IsDisabled)
+VALUES(@username, @passwordHash, @email, @isAdmin, @isDisabled);
 SELECT CAST(SCOPE_IDENTITY() AS INT);", conn, tx))
                     {
                         cmd.Parameters.AddWithValue("@username", user.Username ?? string.Empty);
                         cmd.Parameters.AddWithValue("@passwordHash", Security.HashPassword(password ?? string.Empty));
                         cmd.Parameters.AddWithValue("@email", string.IsNullOrWhiteSpace(user.Email) ? (object)DBNull.Value : user.Email.Trim());
                         cmd.Parameters.AddWithValue("@isAdmin", user.IsAdmin);
+                        cmd.Parameters.AddWithValue("@isDisabled", user.IsDisabled);
                         userId = Convert.ToInt32(cmd.ExecuteScalar());
                     }
 
-                    ReplaceUserClientMappings(conn, tx, userId, user.ClientIds);
+                    ReplaceUserClientMappings(conn, tx, userId, user.IsAdmin ? new List<int>() : user.ClientIds);
                     tx.Commit();
                     return userId;
                 }
@@ -444,7 +564,8 @@ SELECT CAST(SCOPE_IDENTITY() AS INT);", conn, tx))
 UPDATE dbo.Users
 SET Username = @username,
     Email = @email,
-    IsAdmin = @isAdmin";
+    IsAdmin = @isAdmin,
+    IsDisabled = @isDisabled";
 
                     if (!string.IsNullOrWhiteSpace(newPassword))
                     {
@@ -459,6 +580,7 @@ SET Username = @username,
                         cmd.Parameters.AddWithValue("@username", user.Username ?? string.Empty);
                         cmd.Parameters.AddWithValue("@email", string.IsNullOrWhiteSpace(user.Email) ? (object)DBNull.Value : user.Email.Trim());
                         cmd.Parameters.AddWithValue("@isAdmin", user.IsAdmin);
+                        cmd.Parameters.AddWithValue("@isDisabled", user.IsDisabled);
                         if (!string.IsNullOrWhiteSpace(newPassword))
                         {
                             cmd.Parameters.AddWithValue("@passwordHash", Security.HashPassword(newPassword));
@@ -467,7 +589,43 @@ SET Username = @username,
                         cmd.ExecuteNonQuery();
                     }
 
-                    ReplaceUserClientMappings(conn, tx, user.UserId, user.ClientIds);
+                    ReplaceUserClientMappings(conn, tx, user.UserId, user.IsAdmin ? new List<int>() : user.ClientIds);
+                    tx.Commit();
+                }
+            }
+        }
+
+        public static void DisableUser(int userId, bool disabled)
+        {
+            using (var conn = new SqlConnection(ConnectionString))
+            using (var cmd = new SqlCommand("UPDATE dbo.Users SET IsDisabled=@d WHERE UserId=@id", conn))
+            {
+                conn.Open();
+                cmd.Parameters.AddWithValue("@id", userId);
+                cmd.Parameters.AddWithValue("@d", disabled);
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        public static void DeleteUser(int userId)
+        {
+            using (var conn = new SqlConnection(ConnectionString))
+            {
+                conn.Open();
+                using (var tx = conn.BeginTransaction())
+                {
+                using (var delMappings = new SqlCommand("DELETE FROM dbo.UserClients WHERE UserId=@id", conn, tx))
+                {
+                    delMappings.Parameters.AddWithValue("@id", userId);
+                    delMappings.ExecuteNonQuery();
+                }
+
+                using (var delUser = new SqlCommand("DELETE FROM dbo.Users WHERE UserId=@id", conn, tx))
+                {
+                    delUser.Parameters.AddWithValue("@id", userId);
+                    delUser.ExecuteNonQuery();
+                }
+
                     tx.Commit();
                 }
             }
@@ -480,7 +638,8 @@ SET Username = @username,
 UPDATE dbo.Users
 SET PasswordResetToken = @token,
     PasswordResetExpiresUtc = @expires
-WHERE Email = @email;
+WHERE Email = @email
+  AND IsDisabled = 0;
 SELECT @@ROWCOUNT;", conn))
             {
                 conn.Open();

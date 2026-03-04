@@ -9,7 +9,10 @@
 <body>
     <form runat="server">
         <div class="container">
-            <h1>Exclusion Engine Portal</h1>
+            <div class="row">
+                <h1>Exclusion Engine Portal</h1>
+                <asp:Label ID="LoggedInUserLabel" runat="server" CssClass="helper" />
+            </div>
             <asp:ContentPlaceHolder ID="MainContent" runat="server" />
         </div>
     </form>
