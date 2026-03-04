@@ -63,4 +63,10 @@ Demo seed account (for local testing):
 
 ## BCC Satori CASS hookup
 
-Replace the logic inside `SatoriCassService.StandardizeAddress(...)` with your actual BCC Satori server call (SOAP/REST based on your deployment), then map the standardized response fields back into `CustomerEntryInput`.
+`SatoriCassService.StandardizeAddress(...)` now attempts to call the Mailroom Toolkit COM ZIP task (as shown in your WinForms sample) via late binding when the COM component is installed on the web server.
+
+Configure one of these app settings:
+- `SatoriCassMailRoomServer` (preferred, e.g. `10.0.2.37:5150`)
+- `SatoriCassEndpoint` (legacy fallback key)
+
+If the COM task is not installed/reachable, or the returned CASS error code is in the 100-499 range, the app gracefully falls back to local normalization logic so entry save flow still works.
