@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="72" viewBox="0 0 420 72" role="img" aria-labelledby="title desc">
+  <title id="title">CompuTech Direct</title>
+  <desc id="desc">Default company logo placeholder</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0" stop-color="#0e4c92"/>
+      <stop offset="1" stop-color="#1f6fbe"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="420" height="72" rx="8" fill="url(#bg)"/>
+  <rect x="288" y="10" width="2" height="52" fill="#e8eef7" opacity="0.8"/>
+  <text x="20" y="44" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700" fill="#ffffff">CompuTech</text>
+  <text x="303" y="44" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="600" fill="#ffffff">Direct</text>
+</svg>
