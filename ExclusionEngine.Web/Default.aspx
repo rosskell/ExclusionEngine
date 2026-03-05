@@ -53,7 +53,13 @@
         <asp:GridView ID="RecentGrid" runat="server" CssClass="grid" AutoGenerateColumns="false" DataKeyNames="EntryId" OnRowCommand="RecentGrid_RowCommand">
             <Columns>
                 <asp:ButtonField Text="Edit" ButtonType="Button" CommandName="EditEntry" CausesValidation="false" />
-                <asp:ButtonField Text="Delete" ButtonType="Button" CommandName="DeleteEntry" CausesValidation="false" />
+                <asp:TemplateField>
+                    <ItemTemplate>
+                        <asp:Button ID="DeleteEntryButton" runat="server" Text="Delete" CommandName="DeleteEntry"
+                            CommandArgument="<%# ((GridViewRow)Container).RowIndex %>" CausesValidation="false"
+                            OnClientClick="return confirm('Delete this customer entry?');" />
+                    </ItemTemplate>
+                </asp:TemplateField>
                 <asp:BoundField HeaderText="Client" DataField="ClientName" />
                 <asp:BoundField HeaderText="Customer #" DataField="CustomerNumber" />
                 <asp:BoundField HeaderText="Name" DataField="FullName" />

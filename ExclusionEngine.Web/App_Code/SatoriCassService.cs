@@ -136,6 +136,7 @@ namespace ExclusionEngine.Web
             var configuredClsid = (ConfigurationManager.AppSettings["SatoriCassClsid"] ?? string.Empty).Trim();
             var interopPath = (ConfigurationManager.AppSettings["SatoriCassInteropPath"] ?? string.Empty).Trim();
             var interopTypeName = (ConfigurationManager.AppSettings["SatoriCassInteropType"] ?? "MRTKTASKLib.ZIPTaskClass").Trim();
+            var enableInteropPathLoad = IsTruthy(ConfigurationManager.AppSettings["SatoriCassEnableInteropPathLoad"]);
 
             var progIds = new[]
             {
@@ -180,7 +181,7 @@ namespace ExclusionEngine.Web
                 }
             }
 
-            if (!string.IsNullOrWhiteSpace(interopPath) && File.Exists(interopPath))
+            if (enableInteropPathLoad && !string.IsNullOrWhiteSpace(interopPath) && File.Exists(interopPath))
             {
                 try
                 {
@@ -198,6 +199,11 @@ namespace ExclusionEngine.Web
                 {
                     TraceLog(traceEnabled, "Interop assembly activation failed: " + ex.Message);
                 }
+            }
+
+            if (!enableInteropPathLoad && !string.IsNullOrWhiteSpace(interopPath))
+            {
+                TraceLog(traceEnabled, "Skipping interop assembly path load because SatoriCassEnableInteropPathLoad is false.");
             }
 
             TraceLog(traceEnabled, "CreateZipTask failed for all configured activation routes.");

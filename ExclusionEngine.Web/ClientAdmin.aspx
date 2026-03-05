@@ -20,7 +20,13 @@
         <asp:GridView ID="ClientsGrid" runat="server" AutoGenerateColumns="false" DataKeyNames="ClientId" OnRowCommand="ClientsGrid_RowCommand" CssClass="grid">
             <Columns>
                 <asp:ButtonField Text="Edit" ButtonType="Button" CommandName="EditClient" CausesValidation="false" />
-                <asp:ButtonField Text="Delete" ButtonType="Button" CommandName="DeleteClient" CausesValidation="false" />
+                <asp:TemplateField>
+                    <ItemTemplate>
+                        <asp:Button ID="DeleteClientButton" runat="server" Text="Delete" CommandName="DeleteClient"
+                            CommandArgument="<%# ((GridViewRow)Container).RowIndex %>" CausesValidation="false"
+                            OnClientClick="return confirm('Delete this client and related records?');" />
+                    </ItemTemplate>
+                </asp:TemplateField>
                 <asp:BoundField HeaderText="Client Code" DataField="ClientCode" />
                 <asp:BoundField HeaderText="Client Name" DataField="ClientName" />
             </Columns>

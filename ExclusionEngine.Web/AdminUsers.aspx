@@ -28,7 +28,13 @@
             <Columns>
                 <asp:ButtonField Text="Edit" ButtonType="Button" CommandName="EditUser" CausesValidation="false" />
                 <asp:ButtonField Text="Disable/Enable" ButtonType="Button" CommandName="ToggleDisable" CausesValidation="false" />
-                <asp:ButtonField Text="Delete" ButtonType="Button" CommandName="DeleteUser" CausesValidation="false" />
+                <asp:TemplateField>
+                    <ItemTemplate>
+                        <asp:Button ID="DeleteUserButton" runat="server" Text="Delete" CommandName="DeleteUser"
+                            CommandArgument="<%# ((GridViewRow)Container).RowIndex %>" CausesValidation="false"
+                            OnClientClick="return confirm('Delete this user?');" />
+                    </ItemTemplate>
+                </asp:TemplateField>
                 <asp:BoundField HeaderText="Username" DataField="Username" />
                 <asp:BoundField HeaderText="Email" DataField="Email" />
                 <asp:CheckBoxField HeaderText="Admin" DataField="IsAdmin" />

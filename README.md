@@ -85,6 +85,7 @@ Demo seed account (for local testing):
 - `SatoriCassTrace` (`true`/`false`) to emit `Trace` diagnostics
 - `SatoriCassThrowOnError` (`true`/`false`) to fail requests instead of fallback
 - `SatoriCassRequireServerAssignment` (`true`/`false`) to require MailRoom server assignment before `PrepareTask`
+- `SatoriCassEnableInteropPathLoad` (`true`/`false`) to allow loading `SatoriCassInteropPath` (default false to avoid BadImageFormat crashes)
 
 ### Important: do **not** reference `Interop.MRTKTASKLib.dll` in this WebForms project
 The `BadImageFormatException` you saw is a bitness/load-context problem. This app intentionally uses late-bound COM activation (`Type.GetTypeFromProgID`) so it does not require interop DLL loading in ASP.NET.
