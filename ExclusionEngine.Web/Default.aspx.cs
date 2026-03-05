@@ -173,6 +173,7 @@ namespace ExclusionEngine.Web
             {
                 if (IsEditing)
                 {
+                    PreserveExistingCassFieldsForEdit(entry);
                     Repository.UpdateEntry(UserId, Convert.ToInt32(EditingEntryId.Value), entry);
                     MessageLabel.Text = "<span class='success'>Customer entry updated.</span>";
                 }
@@ -189,6 +190,29 @@ namespace ExclusionEngine.Web
             catch (Exception ex)
             {
                 MessageLabel.Text = $"<span class='error'>{HttpUtility.HtmlEncode(ex.Message)}</span>";
+            }
+        }
+
+        private void PreserveExistingCassFieldsForEdit(CustomerEntryInput entry)
+        {
+            if (entry == null || string.IsNullOrWhiteSpace(EditingEntryId.Value)) return;
+
+            var existing = Repository.GetEntryForEdit(UserId, Convert.ToInt32(EditingEntryId.Value));
+            if (existing == null) return;
+
+            if (string.IsNullOrWhiteSpace(entry.Zip4))
+            {
+                entry.Zip4 = existing.Zip4;
+            }
+
+            if (string.IsNullOrWhiteSpace(entry.DeliveryPointBarcode))
+            {
+                entry.DeliveryPointBarcode = existing.DeliveryPointBarcode;
+            }
+
+            if (string.IsNullOrWhiteSpace(entry.Dpv))
+            {
+                entry.Dpv = existing.Dpv;
             }
         }
 

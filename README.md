@@ -16,7 +16,7 @@ This repository contains an **ASP.NET Web Forms** application targeting **.NET F
   - State *(required 2-letter)*
   - Zip *(optional)*
   - Zip+4 *(derived/stored separately when returned by CASS)*
-  - Delivery Point Barcode / DPV *(stored when returned by CASS)*
+  - Delivery Point Barcode / DPV *(stored when returned by CASS; DP barcode persisted as last 3 digits / DPBC)*
   - Email *(optional)*
 - SQL Server storage with per-user/per-client scoping.
 - Edit existing records from the Recent Entries grid.

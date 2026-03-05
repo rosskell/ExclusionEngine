@@ -101,7 +101,7 @@ namespace ExclusionEngine.Web
                     State = (GetProperty(task, "State") ?? string.Empty).ToString().Trim().ToUpperInvariant(),
                     Zip = zip5,
                     Zip4 = zip4,
-                    DeliveryPointBarcode = GetOptionalProperty(task, "DPBarcodeString"),
+                    DeliveryPointBarcode = ExtractLast3Digits(GetOptionalProperty(task, "DPBarcodeString")),
                     Dpv = FirstNonEmpty(
                         GetOptionalProperty(task, "DPV"),
                         GetOptionalProperty(task, "DPVCode"),
@@ -363,7 +363,7 @@ namespace ExclusionEngine.Web
                 State = (input.State ?? string.Empty).Trim().ToUpperInvariant(),
                 Zip = NormalizeZip(input.Zip),
                 Zip4 = NormalizeZip4(input.Zip4),
-                DeliveryPointBarcode = input.DeliveryPointBarcode,
+                DeliveryPointBarcode = ExtractLast3Digits(input.DeliveryPointBarcode),
                 Dpv = input.Dpv,
                 Email = input.Email
             };
@@ -439,6 +439,13 @@ namespace ExclusionEngine.Web
             }
 
             return string.Empty;
+        }
+
+        private static string ExtractLast3Digits(string value)
+        {
+            var digits = DigitsOnly(value);
+            if (digits.Length <= 3) return digits;
+            return digits.Substring(digits.Length - 3, 3);
         }
 
         private static bool IsTruthy(string value)
