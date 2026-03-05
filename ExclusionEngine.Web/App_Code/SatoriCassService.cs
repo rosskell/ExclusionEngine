@@ -67,7 +67,7 @@ namespace ExclusionEngine.Web
                 SetProperty(task, "AddressLine1", input.Address1 ?? string.Empty);
                 SetProperty(task, "City", input.City ?? string.Empty);
                 SetProperty(task, "State", (input.State ?? string.Empty).Trim());
-                SetProperty(task, "ZipCode", input.Zip ?? string.Empty);
+                SetProperty(task, "ZipCode", CombineZip(input.Zip, input.Zip4));
                 SetProperty(task, "CarrierRoute", string.Empty);
 
                 TraceLog(traceEnabled, "Sending address to CASS via CheckAddress().");
@@ -86,6 +86,9 @@ namespace ExclusionEngine.Web
                     return BuildResult(input, fallback);
                 }
 
+                var standardizedZipRaw = (GetProperty(task, "ZipCode") ?? string.Empty).ToString();
+                ParseZip(standardizedZipRaw, out var zip5, out var zip4);
+
                 var standardized = new CustomerEntryInput
                 {
                     ClientId = input.ClientId,
@@ -96,7 +99,14 @@ namespace ExclusionEngine.Web
                     Address2 = ToTitleCase(input.Address2),
                     City = (GetProperty(task, "City") ?? string.Empty).ToString().Trim(),
                     State = (GetProperty(task, "State") ?? string.Empty).ToString().Trim().ToUpperInvariant(),
-                    Zip = NormalizeZip((GetProperty(task, "ZipCode") ?? string.Empty).ToString()),
+                    Zip = zip5,
+                    Zip4 = zip4,
+                    DeliveryPointBarcode = GetOptionalProperty(task, "DPBarcodeString"),
+                    Dpv = FirstNonEmpty(
+                        GetOptionalProperty(task, "DPV"),
+                        GetOptionalProperty(task, "DPVCode"),
+                        GetOptionalProperty(task, "DPVStatus"),
+                        GetOptionalProperty(task, "DPVConfirmation")),
                     Email = input.Email
                 };
 
@@ -324,6 +334,9 @@ namespace ExclusionEngine.Web
                 City = ToTitleCase(input.City),
                 State = (input.State ?? string.Empty).Trim().ToUpperInvariant(),
                 Zip = NormalizeZip(input.Zip),
+                Zip4 = NormalizeZip4(input.Zip4),
+                DeliveryPointBarcode = input.DeliveryPointBarcode,
+                Dpv = input.Dpv,
                 Email = input.Email
             };
         }
@@ -337,7 +350,67 @@ namespace ExclusionEngine.Web
         private static string NormalizeZip(string zip)
         {
             if (string.IsNullOrWhiteSpace(zip)) return string.Empty;
-            return zip.Trim();
+            ParseZip(zip, out var zip5, out _);
+            return zip5;
+        }
+
+        private static string NormalizeZip4(string zip4)
+        {
+            if (string.IsNullOrWhiteSpace(zip4)) return string.Empty;
+            var digits = DigitsOnly(zip4);
+            return digits.Length >= 4 ? digits.Substring(0, 4) : digits;
+        }
+
+        private static void ParseZip(string zip, out string zip5, out string zip4)
+        {
+            var digits = DigitsOnly(zip);
+            zip5 = digits.Length >= 5 ? digits.Substring(0, 5) : digits;
+            zip4 = digits.Length >= 9 ? digits.Substring(5, 4) : string.Empty;
+        }
+
+        private static string DigitsOnly(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+            var chars = value.Trim().ToCharArray();
+            var buffer = new System.Text.StringBuilder(chars.Length);
+            foreach (var c in chars)
+            {
+                if (char.IsDigit(c)) buffer.Append(c);
+            }
+
+            return buffer.ToString();
+        }
+
+        private static string CombineZip(string zip5, string zip4)
+        {
+            var z5 = NormalizeZip(zip5);
+            var z4 = NormalizeZip4(zip4);
+            if (string.IsNullOrWhiteSpace(z4)) return z5;
+            return z5 + "-" + z4;
+        }
+
+        private static string GetOptionalProperty(object instance, string propertyName)
+        {
+            try
+            {
+                var value = GetProperty(instance, propertyName);
+                return value == null ? string.Empty : value.ToString().Trim();
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        private static string FirstNonEmpty(params string[] values)
+        {
+            if (values == null) return string.Empty;
+            foreach (var value in values)
+            {
+                if (!string.IsNullOrWhiteSpace(value)) return value;
+            }
+
+            return string.Empty;
         }
 
         private static bool IsTruthy(string value)

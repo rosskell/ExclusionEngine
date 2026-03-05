@@ -41,13 +41,16 @@ namespace ExclusionEngine.Web
         public string City { get; set; }
         public string State { get; set; }
         public string Zip { get; set; }
+        public string Zip4 { get; set; }
+        public string DeliveryPointBarcode { get; set; }
+        public string Dpv { get; set; }
         public string Email { get; set; }
 
         public string FullName => (FirstName + " " + LastName).Trim();
         public string FormattedAddress =>
             string.IsNullOrWhiteSpace(Address2)
-                ? $"{Address1}, {City}, {State} {Zip}"
-                : $"{Address1}, {Address2}, {City}, {State} {Zip}";
+                ? $"{Address1}, {City}, {State} {Zip}{(string.IsNullOrWhiteSpace(Zip4) ? string.Empty : "-" + Zip4)}"
+                : $"{Address1}, {Address2}, {City}, {State} {Zip}{(string.IsNullOrWhiteSpace(Zip4) ? string.Empty : "-" + Zip4)}";
     }
 
     public class CassResult

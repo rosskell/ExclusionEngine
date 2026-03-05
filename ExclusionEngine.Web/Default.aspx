@@ -64,6 +64,9 @@
                 <asp:BoundField HeaderText="Customer #" DataField="CustomerNumber" />
                 <asp:BoundField HeaderText="Name" DataField="FullName" />
                 <asp:BoundField HeaderText="Address" DataField="FormattedAddress" />
+                <asp:BoundField HeaderText="ZIP+4" DataField="Zip4" />
+                <asp:BoundField HeaderText="DP Barcode" DataField="DeliveryPointBarcode" />
+                <asp:BoundField HeaderText="DPV" DataField="Dpv" />
                 <asp:BoundField HeaderText="Email" DataField="Email" />
                 <asp:BoundField HeaderText="Created" DataField="CreatedAt" />
             </Columns>

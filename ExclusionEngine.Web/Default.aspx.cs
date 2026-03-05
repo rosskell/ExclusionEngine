@@ -130,7 +130,7 @@ namespace ExclusionEngine.Web
                 Address2TextBox.Text = entry.Address2;
                 CityTextBox.Text = entry.City;
                 StateTextBox.Text = entry.State;
-                ZipTextBox.Text = entry.Zip;
+                ZipTextBox.Text = string.IsNullOrWhiteSpace(entry.Zip4) ? entry.Zip : (entry.Zip + "-" + entry.Zip4);
                 EmailTextBox.Text = entry.Email;
 
                 ValidateAddressButton.Text = "Validate + Update";
@@ -226,15 +226,34 @@ namespace ExclusionEngine.Web
                 Address2 = Address2TextBox.Text.Trim(),
                 City = CityTextBox.Text.Trim(),
                 State = StateTextBox.Text.Trim().ToUpperInvariant(),
-                Zip = ZipTextBox.Text.Trim(),
+                Zip = string.Empty,
+                Zip4 = string.Empty,
                 Email = EmailTextBox.Text.Trim()
             };
+
+            ParseZipInput(ZipTextBox.Text, out var zip5, out var zip4);
+            entry.Zip = zip5;
+            entry.Zip4 = zip4;
 
             if (string.IsNullOrWhiteSpace(entry.Address1)) validationError = "Address 1 is required.";
             else if (string.IsNullOrWhiteSpace(entry.City)) validationError = "City is required.";
             else if (string.IsNullOrWhiteSpace(entry.State) || entry.State.Length != 2) validationError = "State must be two letters.";
 
             return string.IsNullOrEmpty(validationError);
+        }
+
+        private static void ParseZipInput(string zipInput, out string zip5, out string zip4)
+        {
+            var raw = (zipInput ?? string.Empty).Trim();
+            var digits = new System.Text.StringBuilder(raw.Length);
+            foreach (var c in raw)
+            {
+                if (char.IsDigit(c)) digits.Append(c);
+            }
+
+            var value = digits.ToString();
+            zip5 = value.Length >= 5 ? value.Substring(0, 5) : value;
+            zip4 = value.Length >= 9 ? value.Substring(5, 4) : string.Empty;
         }
 
         private void ClearForm()
