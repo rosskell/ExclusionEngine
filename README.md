@@ -29,7 +29,7 @@ This repository contains an **ASP.NET Web Forms** application targeting **.NET F
 - Address standardization flow intended for **BCC Satori CASS Server** integration:
   - Uses a Mailroom Toolkit COM ZIP task call path in `SatoriCassService` (late-bound).
   - Before saving, entered and standardized addresses are compared.
-  - The modal allows users to **accept standardized** or **keep original** and save.
+  - The modal allows users to **accept standardized**, **keep original**, or **cancel** and return to the populated form.
   - If COM is unavailable/erroring, flow falls back to local normalization unless strict mode is enabled.
 
 ## Project layout
@@ -86,6 +86,7 @@ Demo seed account (for local testing):
 - `SatoriCassEndpoint` (legacy fallback server key)
 - `SatoriCassTrace` (`true`/`false`) to emit `Trace` diagnostics
 - `SatoriCassThrowOnError` (`true`/`false`) to fail requests instead of fallback
+- When CASS returns an error (for example code 100-499), the prompt now shows the CASS failure message and lets the user choose whether to proceed with original/standardized or cancel.
 - `SatoriCassRequireServerAssignment` (`true`/`false`) to require MailRoom server assignment before `PrepareTask`
 - `SatoriCassEnableInteropPathLoad` (`true`/`false`) to allow loading `SatoriCassInteropPath` (default false to avoid BadImageFormat crashes)
 

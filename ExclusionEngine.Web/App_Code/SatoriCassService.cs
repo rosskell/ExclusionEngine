@@ -31,7 +31,7 @@ namespace ExclusionEngine.Web
                         throw new InvalidOperationException("CASS COM object could not be created. See logs for details.");
                     }
 
-                    return BuildResult(input, fallback);
+                    return BuildResult(input, fallback, true, "Unable to initialize CASS ZIP task.");
                 }
 
                 var server = (ConfigurationManager.AppSettings["SatoriCassMailRoomServer"]
@@ -83,7 +83,7 @@ namespace ExclusionEngine.Web
                         throw new InvalidOperationException("CASS returned error code: " + errorCodes);
                     }
 
-                    return BuildResult(input, fallback);
+                    return BuildResult(input, fallback, true, BuildCassErrorMessage(task, errorCodes));
                 }
 
                 var standardizedZipRaw = (GetProperty(task, "ZipCode") ?? string.Empty).ToString();
@@ -110,7 +110,7 @@ namespace ExclusionEngine.Web
                     Email = input.Email
                 };
 
-                return BuildResult(input, standardized);
+                return BuildResult(input, standardized, false, string.Empty);
             }
             catch (Exception ex)
             {
@@ -120,7 +120,7 @@ namespace ExclusionEngine.Web
                     throw;
                 }
 
-                return BuildResult(input, fallback);
+                return BuildResult(input, fallback, true, ex.Message);
             }
             finally
             {
@@ -312,13 +312,41 @@ namespace ExclusionEngine.Web
             return ((input.FirstName ?? string.Empty) + " " + (input.LastName ?? string.Empty)).Trim();
         }
 
-        private static CassResult BuildResult(CustomerEntryInput input, CustomerEntryInput standardized)
+        private static CassResult BuildResult(CustomerEntryInput input, CustomerEntryInput standardized, bool hasError, string errorMessage)
         {
             return new CassResult
             {
                 Standardized = standardized,
-                HasChanges = !string.Equals(input.FormattedAddress, standardized.FormattedAddress, StringComparison.Ordinal)
+                HasChanges = !string.Equals(input.FormattedAddress, standardized.FormattedAddress, StringComparison.Ordinal),
+                HasError = hasError,
+                ErrorMessage = errorMessage ?? string.Empty
             };
+        }
+
+        private static string BuildCassErrorMessage(object task, int errorCode)
+        {
+            var message = string.Empty;
+            try
+            {
+                var result = task.GetType().InvokeMember(
+                    "get_ErrorCodeString",
+                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.InvokeMethod,
+                    null,
+                    task,
+                    new object[] { 1 });
+                message = result == null ? string.Empty : result.ToString();
+            }
+            catch
+            {
+                // best effort only
+            }
+
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                return "CASS validation failed with code " + errorCode + ".";
+            }
+
+            return "CASS validation failed with code " + errorCode + ": " + message;
         }
 
         private static CustomerEntryInput BuildFallbackStandardized(CustomerEntryInput input)

@@ -91,12 +91,16 @@ namespace ExclusionEngine.Web
             }
 
             var cass = SatoriCassService.StandardizeAddress(entry);
-            if (cass.HasChanges)
+            if (cass.HasChanges || cass.HasError)
             {
                 var entered = HttpUtility.JavaScriptStringEncode(entry.FormattedAddress);
                 var standardized = HttpUtility.JavaScriptStringEncode(cass.Standardized.FormattedAddress);
-                ModalScriptLiteral.Text = $"<script>showCassModal('{entered}','{standardized}');</script>";
-                MessageLabel.Text = "<span class='warn'>Review the standardized address and save your selection.</span>";
+                var cassErrorMessage = HttpUtility.JavaScriptStringEncode(cass.ErrorMessage ?? string.Empty);
+                var cassHasErrorJs = cass.HasError ? "true" : "false";
+                ModalScriptLiteral.Text = $"<script>showCassModal('{entered}','{standardized}',{cassHasErrorJs},'{cassErrorMessage}');</script>";
+                MessageLabel.Text = cass.HasError
+                    ? "<span class='warn'>CASS validation reported an issue. Review and choose how to proceed.</span>"
+                    : "<span class='warn'>Review the standardized address and save your selection.</span>";
                 Session["PendingOriginalEntry"] = entry;
                 Session["PendingStandardizedEntry"] = cass.Standardized;
                 return;

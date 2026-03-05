@@ -56,6 +56,8 @@ namespace ExclusionEngine.Web
     public class CassResult
     {
         public bool HasChanges { get; set; }
+        public bool HasError { get; set; }
+        public string ErrorMessage { get; set; }
         public CustomerEntryInput Standardized { get; set; }
     }
 }

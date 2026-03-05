@@ -33,10 +33,12 @@
     <div id="confirmModal" class="modal hidden">
         <div class="modal-content">
             <h3>Confirm Address Changes</h3>
+            <p id="cassStatus" class="warn"></p>
             <p><strong>Entered:</strong> <span id="enteredAddress"></span></p>
             <p><strong>Standardized (CASS):</strong> <span id="cassAddress"></span></p>
             <button type="button" class="btn" onclick="acceptCassChanges()">Accept Standardized & Save</button>
             <button type="button" class="btn secondary" onclick="keepOriginalAndSave()">Keep Original & Save</button>
+            <button type="button" class="btn secondary" onclick="cancelCassPrompt()">Cancel</button>
         </div>
     </div>
 
