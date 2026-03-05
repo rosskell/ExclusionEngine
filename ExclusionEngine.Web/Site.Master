@@ -11,7 +11,10 @@
         <div class="container">
             <div class="row">
                 <h1>Exclusion Engine Portal</h1>
-                <asp:Label ID="LoggedInUserLabel" runat="server" CssClass="helper" />
+                <div class="header-right">
+                    <asp:Label ID="LoggedInUserLabel" runat="server" CssClass="helper" />
+                    <asp:Image ID="CompanyLogoImage" runat="server" CssClass="company-logo" AlternateText="CompuTech Direct" />
+                </div>
             </div>
             <asp:ContentPlaceHolder ID="MainContent" runat="server" />
         </div>

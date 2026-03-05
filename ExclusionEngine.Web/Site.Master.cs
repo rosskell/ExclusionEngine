@@ -1,4 +1,6 @@
 using System;
+using System.Configuration;
+using System.IO;
 
 namespace ExclusionEngine.Web
 {
@@ -13,6 +15,24 @@ namespace ExclusionEngine.Web
             else
             {
                 LoggedInUserLabel.Text = string.Empty;
+            }
+
+            var logoUrl = ConfigurationManager.AppSettings["CompanyLogoUrl"];
+            if (string.IsNullOrWhiteSpace(logoUrl))
+            {
+                logoUrl = "~/Images/CompuTechDirectLogo.png";
+            }
+
+            CompanyLogoImage.ImageUrl = logoUrl;
+
+            if (logoUrl.StartsWith("~/", StringComparison.Ordinal))
+            {
+                var physical = Server.MapPath(logoUrl);
+                CompanyLogoImage.Visible = File.Exists(physical);
+            }
+            else
+            {
+                CompanyLogoImage.Visible = true;
             }
         }
     }

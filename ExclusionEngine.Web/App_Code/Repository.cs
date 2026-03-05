@@ -56,7 +56,6 @@ CREATE TABLE dbo.CustomerEntries (
     Zip NVARCHAR(10) NOT NULL,
     Zip4 NVARCHAR(4) NULL,
     DeliveryPointBarcode NVARCHAR(32) NULL,
-    Dpv NVARCHAR(20) NULL,
     Email NVARCHAR(200) NULL,
     CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
     CONSTRAINT FK_CustomerEntries_Users FOREIGN KEY (UserId) REFERENCES dbo.Users(UserId),
@@ -78,8 +77,6 @@ IF COL_LENGTH('dbo.CustomerEntries', 'Zip4') IS NULL
     ALTER TABLE dbo.CustomerEntries ADD Zip4 NVARCHAR(4) NULL;
 IF COL_LENGTH('dbo.CustomerEntries', 'DeliveryPointBarcode') IS NULL
     ALTER TABLE dbo.CustomerEntries ADD DeliveryPointBarcode NVARCHAR(32) NULL;
-IF COL_LENGTH('dbo.CustomerEntries', 'Dpv') IS NULL
-    ALTER TABLE dbo.CustomerEntries ADD Dpv NVARCHAR(20) NULL;
 ";
                 new SqlCommand(sql, conn).ExecuteNonQuery();
             }
@@ -318,9 +315,9 @@ SELECT CASE WHEN EXISTS (
             using (var conn = new SqlConnection(ConnectionString))
             using (var cmd = new SqlCommand(@"
 INSERT INTO dbo.CustomerEntries
-(UserId, ClientId, CustomerNumber, FirstName, LastName, Address1, Address2, City, State, Zip, Zip4, DeliveryPointBarcode, Dpv, Email)
+(UserId, ClientId, CustomerNumber, FirstName, LastName, Address1, Address2, City, State, Zip, Zip4, DeliveryPointBarcode, Email)
 VALUES
-(@u, @c, @n, @fn, @ln, @a1, @a2, @city, @st, @zip, @zip4, @dpb, @dpv, @email)", conn))
+(@u, @c, @n, @fn, @ln, @a1, @a2, @city, @st, @zip, @zip4, @dpb, @email)", conn))
             {
                 conn.Open();
                 cmd.Parameters.AddWithValue("@u", userId);
@@ -335,7 +332,6 @@ VALUES
                 cmd.Parameters.AddWithValue("@zip", input.Zip ?? string.Empty);
                 cmd.Parameters.AddWithValue("@zip4", string.IsNullOrWhiteSpace(input.Zip4) ? (object)DBNull.Value : input.Zip4);
                 cmd.Parameters.AddWithValue("@dpb", string.IsNullOrWhiteSpace(input.DeliveryPointBarcode) ? (object)DBNull.Value : input.DeliveryPointBarcode);
-                cmd.Parameters.AddWithValue("@dpv", string.IsNullOrWhiteSpace(input.Dpv) ? (object)DBNull.Value : input.Dpv);
                 cmd.Parameters.AddWithValue("@email", string.IsNullOrWhiteSpace(input.Email) ? (object)DBNull.Value : input.Email);
                 cmd.ExecuteNonQuery();
             }
@@ -346,7 +342,7 @@ VALUES
             using (var conn = new SqlConnection(ConnectionString))
             using (var cmd = new SqlCommand(@"
 SELECT ce.EntryId, ce.ClientId, ce.CustomerNumber, ce.FirstName, ce.LastName,
-       ce.Address1, ce.Address2, ce.City, ce.State, ce.Zip, ce.Zip4, ce.DeliveryPointBarcode, ce.Dpv, ce.Email
+       ce.Address1, ce.Address2, ce.City, ce.State, ce.Zip, ce.Zip4, ce.DeliveryPointBarcode, ce.Email
 FROM dbo.CustomerEntries ce
 INNER JOIN dbo.Clients c ON c.ClientId = ce.ClientId
 WHERE ce.EntryId = @entryId", conn))
@@ -375,8 +371,7 @@ WHERE ce.EntryId = @entryId", conn))
                         Zip = reader.GetString(9),
                         Zip4 = reader.IsDBNull(10) ? string.Empty : reader.GetString(10),
                         DeliveryPointBarcode = reader.IsDBNull(11) ? string.Empty : reader.GetString(11),
-                        Dpv = reader.IsDBNull(12) ? string.Empty : reader.GetString(12),
-                        Email = reader.IsDBNull(13) ? string.Empty : reader.GetString(13)
+                        Email = reader.IsDBNull(12) ? string.Empty : reader.GetString(12)
                     };
                 }
             }
@@ -403,7 +398,6 @@ SET ClientId = @c,
     Zip = @zip,
     Zip4 = @zip4,
     DeliveryPointBarcode = @dpb,
-    Dpv = @dpv,
     Email = @email
 WHERE EntryId = @entryId", conn))
             {
@@ -420,7 +414,6 @@ WHERE EntryId = @entryId", conn))
                 cmd.Parameters.AddWithValue("@zip", input.Zip ?? string.Empty);
                 cmd.Parameters.AddWithValue("@zip4", string.IsNullOrWhiteSpace(input.Zip4) ? (object)DBNull.Value : input.Zip4);
                 cmd.Parameters.AddWithValue("@dpb", string.IsNullOrWhiteSpace(input.DeliveryPointBarcode) ? (object)DBNull.Value : input.DeliveryPointBarcode);
-                cmd.Parameters.AddWithValue("@dpv", string.IsNullOrWhiteSpace(input.Dpv) ? (object)DBNull.Value : input.Dpv);
                 cmd.Parameters.AddWithValue("@email", string.IsNullOrWhiteSpace(input.Email) ? (object)DBNull.Value : input.Email);
 
                 var affected = cmd.ExecuteNonQuery();
@@ -460,7 +453,6 @@ SELECT TOP 20
     ce.Address1 + COALESCE(', ' + NULLIF(ce.Address2,''), '') + ', ' + ce.City + ', ' + ce.State + ' ' + ce.Zip + COALESCE('-' + NULLIF(ce.Zip4,''), '') AS FormattedAddress,
     COALESCE(ce.Zip4, '') AS Zip4,
     COALESCE(ce.DeliveryPointBarcode, '') AS DeliveryPointBarcode,
-    COALESCE(ce.Dpv, '') AS Dpv,
     ce.Email,
     ce.CreatedAt
 FROM dbo.CustomerEntries ce

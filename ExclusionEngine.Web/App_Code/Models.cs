@@ -43,7 +43,6 @@ namespace ExclusionEngine.Web
         public string Zip { get; set; }
         public string Zip4 { get; set; }
         public string DeliveryPointBarcode { get; set; }
-        public string Dpv { get; set; }
         public string Email { get; set; }
 
         public string FullName => (FirstName + " " + LastName).Trim();

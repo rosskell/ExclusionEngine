@@ -16,10 +16,11 @@ This repository contains an **ASP.NET Web Forms** application targeting **.NET F
   - State *(required 2-letter)*
   - Zip *(optional)*
   - Zip+4 *(derived/stored separately when returned by CASS)*
-  - Delivery Point Barcode / DPV *(stored when returned by CASS; DP barcode persisted as last 3 digits / DPBC)*
+  - Delivery Point Barcode *(stored when returned by CASS; persisted as last 3 digits / DPBC)*
   - Email *(optional)*
 - SQL Server storage with per-user/per-client scoping.
 - Edit existing records from the Recent Entries grid.
+- Edit updates prompt for save confirmation before applying changes.
 - Recent entries are filtered to clients the current user is authorized to access.
 - Password hashing (PBKDF2) for stored credentials.
 - Admin-only user management page (`AdminUsers.aspx`) to add/update users, admin flags, and client access mappings.
@@ -56,6 +57,7 @@ This repository contains an **ASP.NET Web Forms** application targeting **.NET F
    - `SatoriCassEndpoint`, `SatoriCassUsername`, `SatoriCassPassword`
    - `AppBaseUrl` (used in reset links)
    - `FromEmail` (used by SMTP sender)
+   - `CompanyLogoUrl` (optional header logo URL; defaults to `~/Images/CompuTechDirectLogo.png`)
 6. Configure SMTP in `system.net/mailSettings` (or machine config) for reset email delivery.
 7. Run the web app.
 

@@ -102,11 +102,6 @@ namespace ExclusionEngine.Web
                     Zip = zip5,
                     Zip4 = zip4,
                     DeliveryPointBarcode = ExtractLast3Digits(GetOptionalProperty(task, "DPBarcodeString")),
-                    Dpv = FirstNonEmpty(
-                        GetOptionalProperty(task, "DPV"),
-                        GetOptionalProperty(task, "DPVCode"),
-                        GetOptionalProperty(task, "DPVStatus"),
-                        GetOptionalProperty(task, "DPVConfirmation")),
                     Email = input.Email
                 };
 
@@ -364,7 +359,6 @@ namespace ExclusionEngine.Web
                 Zip = NormalizeZip(input.Zip),
                 Zip4 = NormalizeZip4(input.Zip4),
                 DeliveryPointBarcode = ExtractLast3Digits(input.DeliveryPointBarcode),
-                Dpv = input.Dpv,
                 Email = input.Email
             };
         }
@@ -428,17 +422,6 @@ namespace ExclusionEngine.Web
             {
                 return string.Empty;
             }
-        }
-
-        private static string FirstNonEmpty(params string[] values)
-        {
-            if (values == null) return string.Empty;
-            foreach (var value in values)
-            {
-                if (!string.IsNullOrWhiteSpace(value)) return value;
-            }
-
-            return string.Empty;
         }
 
         private static string ExtractLast3Digits(string value)

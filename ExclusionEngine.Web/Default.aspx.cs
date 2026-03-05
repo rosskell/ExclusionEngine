@@ -106,7 +106,7 @@ namespace ExclusionEngine.Web
                 return;
             }
 
-            SaveEntry(entry);
+            SaveEntry(cass.Standardized ?? entry);
         }
 
         protected void RecentGrid_RowCommand(object sender, GridViewCommandEventArgs e)
@@ -138,6 +138,7 @@ namespace ExclusionEngine.Web
                 EmailTextBox.Text = entry.Email;
 
                 ValidateAddressButton.Text = "Validate + Update";
+                ValidateAddressButton.OnClientClick = "return confirm('Save changes to this entry?');";
                 CancelEditButton.Visible = true;
                 MessageLabel.Text = "<span class='warn'>Editing existing record. Save to update.</span>";
                 return;
@@ -210,10 +211,6 @@ namespace ExclusionEngine.Web
                 entry.DeliveryPointBarcode = existing.DeliveryPointBarcode;
             }
 
-            if (string.IsNullOrWhiteSpace(entry.Dpv))
-            {
-                entry.Dpv = existing.Dpv;
-            }
         }
 
         private void ClearPendingCassState()
@@ -229,6 +226,7 @@ namespace ExclusionEngine.Web
         {
             EditingEntryId.Value = string.Empty;
             ValidateAddressButton.Text = "Validate + Save";
+            ValidateAddressButton.OnClientClick = string.Empty;
             CancelEditButton.Visible = false;
             ClearForm();
         }
