@@ -75,6 +75,7 @@
     <Content Include="Global.asax" />
     <Content Include="Login.aspx" />
     <Content Include="Scripts\site.js" />
+    <Content Include="Images\CompuTechDirectLogo.svg" />
     <Content Include="Styles.css" />
     <Content Include="Web.config" />
   </ItemGroup>

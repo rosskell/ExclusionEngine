@@ -57,7 +57,8 @@ This repository contains an **ASP.NET Web Forms** application targeting **.NET F
    - `SatoriCassEndpoint`, `SatoriCassUsername`, `SatoriCassPassword`
    - `AppBaseUrl` (used in reset links)
    - `FromEmail` (used by SMTP sender)
-   - `CompanyLogoUrl` (optional header logo URL; defaults to `~/Images/CompuTechDirectLogo.png`)
+   - `CompanyLogoUrl` (optional header logo URL; defaults to `~/Images/CompuTechDirectLogo.svg`)
+   - Default logo file is included at `ExclusionEngine.Web/Images/CompuTechDirectLogo.svg` (replace with your branded image as needed).
 6. Configure SMTP in `system.net/mailSettings` (or machine config) for reset email delivery.
 7. Run the web app.
 

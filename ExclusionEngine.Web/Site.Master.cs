@@ -20,7 +20,7 @@ namespace ExclusionEngine.Web
             var logoUrl = ConfigurationManager.AppSettings["CompanyLogoUrl"];
             if (string.IsNullOrWhiteSpace(logoUrl))
             {
-                logoUrl = "~/Images/CompuTechDirectLogo.png";
+                logoUrl = "~/Images/CompuTechDirectLogo.svg";
             }
 
             CompanyLogoImage.ImageUrl = logoUrl;
