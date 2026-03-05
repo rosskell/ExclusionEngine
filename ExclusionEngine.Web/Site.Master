@@ -1,0 +1,20 @@
+<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="Site.Master.cs" Inherits="ExclusionEngine.Web.SiteMaster" %>
+<!DOCTYPE html>
+<html>
+<head runat="server">
+    <title>Exclusion Engine Portal</title>
+    <link rel="stylesheet" href="Styles.css" />
+    <script src="Scripts/site.js"></script>
+</head>
+<body>
+    <form runat="server">
+        <div class="container">
+            <div class="row">
+                <h1>Exclusion Engine Portal</h1>
+                <asp:Label ID="LoggedInUserLabel" runat="server" CssClass="helper" />
+            </div>
+            <asp:ContentPlaceHolder ID="MainContent" runat="server" />
+        </div>
+    </form>
+</body>
+</html>
