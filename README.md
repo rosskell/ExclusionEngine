@@ -47,6 +47,10 @@ This repository contains an **ASP.NET Web Forms** application targeting **.NET F
 - `ExclusionEngine.Web/App_Code/SatoriCassService.cs` (CASS integration point)
 - `ExclusionEngine.Web/App_Code/EmailService.cs` (SMTP reset email)
 
+## Documentation
+
+- End-user and admin guide: [USER_MANUAL.md](USER_MANUAL.md)
+
 ## Run in IIS / Visual Studio
 
 1. Open `ExclusionEngine.sln` in Visual Studio.
