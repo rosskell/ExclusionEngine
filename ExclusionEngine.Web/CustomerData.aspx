@@ -8,7 +8,7 @@
             </div>
         </div>
         <asp:Label ID="MessageLabel" runat="server" />
-        <div class="search-row">
+        <div class="search-row customer-data-filters">
             <label>Client</label>
             <asp:DropDownList ID="ClientFilterDropDown" runat="server" AutoPostBack="true" OnSelectedIndexChanged="ClientFilterDropDown_SelectedIndexChanged" />
             <label>Search Last Name</label><asp:TextBox ID="SearchLastNameTextBox" runat="server" />
@@ -24,8 +24,8 @@
             <asp:Button ID="ClearSearchButton" runat="server" Text="Clear" CssClass="btn secondary" OnClick="ClearSearchButton_Click" CausesValidation="false" UseSubmitBehavior="false" />
         </div>
 
-        <div class="grid-wrap">
-        <asp:GridView ID="CustomerGrid" runat="server" CssClass="grid wide-grid" AutoGenerateColumns="false" DataKeyNames="EntryId"
+        <div class="grid-wrap customer-grid-wrap">
+        <asp:GridView ID="CustomerGrid" runat="server" CssClass="grid customer-grid" AutoGenerateColumns="false" DataKeyNames="EntryId"
             AllowPaging="true" AllowSorting="true" PageSize="20"
             OnPageIndexChanging="CustomerGrid_PageIndexChanging" OnSorting="CustomerGrid_Sorting" OnRowCommand="CustomerGrid_RowCommand">
             <Columns>
@@ -42,22 +42,23 @@
                             OnClientClick="return confirm('Delete this customer entry?');" />
                     </ItemTemplate>
                 </asp:TemplateField>
-                <asp:BoundField HeaderText="Client" DataField="ClientName" />
-                <asp:BoundField HeaderText="Customer Number" DataField="CustomerNumber" />
-                <asp:BoundField HeaderText="First Name" DataField="FirstName" />
-                <asp:BoundField HeaderText="Last Name" DataField="LastName" SortExpression="LastName" />
-                <asp:BoundField HeaderText="Address1" DataField="Address1" />
-                <asp:BoundField HeaderText="Address2" DataField="Address2" />
-                <asp:BoundField HeaderText="City" DataField="City" />
-                <asp:BoundField HeaderText="State" DataField="State" SortExpression="State" />
-                <asp:BoundField HeaderText="Zip" DataField="Zip" SortExpression="Zip" />
-                <asp:BoundField HeaderText="Zip4" DataField="Zip4" />
-                <asp:BoundField HeaderText="DPB" DataField="DeliveryPointBarcode" />
-                <asp:BoundField HeaderText="Email" DataField="Email" />
+                <asp:BoundField HeaderText="Client" DataField="ClientName" ItemStyle-CssClass="col-client" />
+                <asp:BoundField HeaderText="Customer #" DataField="CustomerNumber" ItemStyle-CssClass="col-nowrap" />
+                <asp:BoundField HeaderText="First Name" DataField="FirstName" ItemStyle-CssClass="col-nowrap" />
+                <asp:BoundField HeaderText="Last Name" DataField="LastName" SortExpression="LastName" ItemStyle-CssClass="col-nowrap" />
+                <asp:BoundField HeaderText="Address 1" DataField="Address1" ItemStyle-CssClass="col-address" />
+                <asp:BoundField HeaderText="Address 2" DataField="Address2" ItemStyle-CssClass="col-address" />
+                <asp:BoundField HeaderText="City" DataField="City" ItemStyle-CssClass="col-nowrap" />
+                <asp:BoundField HeaderText="State" DataField="State" SortExpression="State" ItemStyle-CssClass="col-nowrap" />
+                <asp:BoundField HeaderText="Zip" DataField="Zip" SortExpression="Zip" ItemStyle-CssClass="col-nowrap" />
+                <asp:BoundField HeaderText="Zip4" DataField="Zip4" ItemStyle-CssClass="col-nowrap" />
+                <asp:BoundField HeaderText="DPB" DataField="DeliveryPointBarcode" ItemStyle-CssClass="col-nowrap" />
+                <asp:BoundField HeaderText="Email" DataField="Email" ItemStyle-CssClass="col-email" />
                 <asp:TemplateField HeaderText="Created At">
                     <ItemTemplate>
                         <asp:Literal ID="CreatedAtLiteral" runat="server" Text='<%# FormatCreatedAtForBrowser(Eval("CreatedAt")) %>' />
                     </ItemTemplate>
+                    <ItemStyle CssClass="col-nowrap" />
                 </asp:TemplateField>
             </Columns>
         </asp:GridView>

@@ -103,22 +103,7 @@ BEGIN
         IsDisabled = 0
     WHERE Username = 'demo';
 END
-IF EXISTS (SELECT 1 FROM dbo.Clients WHERE ClientCode = 'CLI-ALPHA')
-BEGIN
-    UPDATE dbo.Clients SET IsActive = 1 WHERE ClientCode = 'CLI-ALPHA';
-END
-IF NOT EXISTS (SELECT 1 FROM dbo.Clients WHERE ClientCode = 'CLI-ALPHA')
-BEGIN
-    INSERT INTO dbo.Clients (ClientCode, ClientName, IsActive) VALUES ('CLI-ALPHA', 'Alpha Logistics', 1);
-END
-IF EXISTS (SELECT 1 FROM dbo.Clients WHERE ClientCode = 'CLI-BETA')
-BEGIN
-    UPDATE dbo.Clients SET IsActive = 1 WHERE ClientCode = 'CLI-BETA';
-END
-IF NOT EXISTS (SELECT 1 FROM dbo.Clients WHERE ClientCode = 'CLI-BETA')
-BEGIN
-    INSERT INTO dbo.Clients (ClientCode, ClientName, IsActive) VALUES ('CLI-BETA', 'Beta Retail', 1);
-END", conn);
+", conn);
                 cmd.Parameters.AddWithValue("@demoPasswordHash", Security.HashPassword("demo123"));
                 cmd.ExecuteNonQuery();
             }

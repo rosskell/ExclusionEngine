@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Web;
 using System.Web.UI.WebControls;
@@ -291,11 +292,11 @@ namespace ExclusionEngine.Web
             {
                 ClientId = clientId,
                 CustomerNumber = CustomerNumberTextBox.Text.Trim(),
-                FirstName = FirstNameTextBox.Text.Trim(),
-                LastName = LastNameTextBox.Text.Trim(),
-                Address1 = Address1TextBox.Text.Trim(),
-                Address2 = Address2TextBox.Text.Trim(),
-                City = CityTextBox.Text.Trim(),
+                FirstName = ToTitleCase(FirstNameTextBox.Text),
+                LastName = ToTitleCase(LastNameTextBox.Text),
+                Address1 = ToTitleCase(Address1TextBox.Text),
+                Address2 = ToTitleCase(Address2TextBox.Text),
+                City = ToTitleCase(CityTextBox.Text),
                 State = StateTextBox.Text.Trim().ToUpperInvariant(),
                 Zip = string.Empty,
                 Zip4 = string.Empty,
@@ -311,6 +312,12 @@ namespace ExclusionEngine.Web
             else if (!Regex.IsMatch(entry.State ?? string.Empty, "^[A-Z]{2}$")) validationError = "State must be two letters.";
 
             return string.IsNullOrEmpty(validationError);
+        }
+
+        private static string ToTitleCase(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+            return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(value.Trim().ToLowerInvariant());
         }
 
         private static void ParseZipInput(string zipInput, out string zip5, out string zip4)
