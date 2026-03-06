@@ -6,6 +6,7 @@
             <div class="top-actions">
                 <asp:Button ID="UserAdminButton" runat="server" Text="User Admin" PostBackUrl="~/AdminUsers.aspx" CssClass="btn" Visible="false" CausesValidation="false" UseSubmitBehavior="false" />
                 <asp:Button ID="ClientAdminButton" runat="server" Text="Client Admin" PostBackUrl="~/ClientAdmin.aspx" CssClass="btn" Visible="false" CausesValidation="false" UseSubmitBehavior="false" />
+                <asp:Button ID="CustomerDataButton" runat="server" Text="Customer Data" PostBackUrl="~/CustomerData.aspx" CssClass="btn" CausesValidation="false" UseSubmitBehavior="false" />
                 <asp:Button ID="LogoutButton" runat="server" Text="Log out" OnClick="LogoutButton_Click" CssClass="btn secondary" CausesValidation="false" UseSubmitBehavior="false" />
             </div>
         </div>
@@ -66,10 +67,13 @@
                 <asp:BoundField HeaderText="Customer #" DataField="CustomerNumber" />
                 <asp:BoundField HeaderText="Name" DataField="FullName" />
                 <asp:BoundField HeaderText="Address" DataField="FormattedAddress" />
-                <asp:BoundField HeaderText="ZIP+4" DataField="Zip4" />
                 <asp:BoundField HeaderText="DP Barcode" DataField="DeliveryPointBarcode" />
                 <asp:BoundField HeaderText="Email" DataField="Email" />
-                <asp:BoundField HeaderText="Created" DataField="CreatedAt" />
+                <asp:TemplateField HeaderText="Created">
+                    <ItemTemplate>
+                        <asp:Literal ID="CreatedAtLiteral" runat="server" Text='<%# FormatCreatedAtForBrowser(Eval("CreatedAt")) %>' />
+                    </ItemTemplate>
+                </asp:TemplateField>
             </Columns>
         </asp:GridView>
     </div>

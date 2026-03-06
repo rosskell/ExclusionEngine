@@ -19,9 +19,10 @@ This repository contains an **ASP.NET Web Forms** application targeting **.NET F
   - Delivery Point Barcode *(stored when returned by CASS; persisted as last 3 digits / DPBC)*
   - Email *(optional)*
 - SQL Server storage with per-user/per-client scoping.
-- Edit existing records from the Recent Entries grid.
+- Edit existing records from the Recent Entries grid or the Customer Data page.
 - Edit updates prompt for save confirmation before applying changes.
-- Recent entries are filtered to clients the current user is authorized to access.
+- Recent entries are filtered to clients the current user is authorized to access (shows core summary fields).
+- Customer Data page (`CustomerData.aspx`) provides full customer columns, client filter, paging, sorting (Last Name/State/Zip), and edit/delete actions.
 - Password hashing (PBKDF2) for stored credentials.
 - Admin-only user management page (`AdminUsers.aspx`) to add/update users, admin flags, and client access mappings.
 - Forgot password flow:
@@ -40,6 +41,7 @@ This repository contains an **ASP.NET Web Forms** application targeting **.NET F
 - `ExclusionEngine.Web/Default.aspx` (entry form + modal confirmation)
 - `ExclusionEngine.Web/Login.aspx`
 - `ExclusionEngine.Web/AdminUsers.aspx`
+- `ExclusionEngine.Web/CustomerData.aspx`
 - `ExclusionEngine.Web/ForgotPassword.aspx`
 - `ExclusionEngine.Web/ResetPassword.aspx`
 - `ExclusionEngine.Web/App_Code/Repository.cs` (SQL access + schema/seed)

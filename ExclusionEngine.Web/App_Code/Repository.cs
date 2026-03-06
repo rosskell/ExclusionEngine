@@ -478,6 +478,51 @@ ORDER BY ce.CreatedAt DESC", conn))
             }
         }
 
+        public static DataTable GetCustomerDataForUser(int userId, int? clientId = null, string lastNameContains = null, string address1Contains = null)
+        {
+            using (var conn = new SqlConnection(ConnectionString))
+            using (var cmd = new SqlCommand(@"
+SELECT
+    ce.EntryId,
+    ce.ClientId,
+    c.ClientCode + ' - ' + c.ClientName AS ClientName,
+    ce.CustomerNumber,
+    ce.FirstName,
+    ce.LastName,
+    ce.Address1,
+    COALESCE(ce.Address2, '') AS Address2,
+    ce.City,
+    ce.State,
+    ce.Zip,
+    COALESCE(ce.Zip4, '') AS Zip4,
+    COALESCE(ce.DeliveryPointBarcode, '') AS DeliveryPointBarcode,
+    COALESCE(ce.Email, '') AS Email,
+    ce.CreatedAt
+FROM dbo.CustomerEntries ce
+INNER JOIN dbo.Clients c ON ce.ClientId = c.ClientId
+WHERE (
+    ce.ClientId IN (
+        SELECT ClientId FROM dbo.UserClients WHERE UserId = @u
+    )
+    OR @isAdmin = 1
+)
+AND (@clientId = 0 OR ce.ClientId = @clientId)
+AND (@lastName = '' OR ce.LastName LIKE '%' + @lastName + '%')
+AND (@address1 = '' OR ce.Address1 LIKE '%' + @address1 + '%')
+ORDER BY ce.CreatedAt DESC", conn))
+            {
+                conn.Open();
+                cmd.Parameters.AddWithValue("@u", userId);
+                cmd.Parameters.AddWithValue("@isAdmin", IsAdminUser(userId));
+                cmd.Parameters.AddWithValue("@clientId", clientId.GetValueOrDefault());
+                cmd.Parameters.AddWithValue("@lastName", lastNameContains ?? string.Empty);
+                cmd.Parameters.AddWithValue("@address1", address1Contains ?? string.Empty);
+                var dt = new DataTable();
+                dt.Load(cmd.ExecuteReader());
+                return dt;
+            }
+        }
+
         public static DataTable GetAllUsersForAdmin()
         {
             using (var conn = new SqlConnection(ConnectionString))

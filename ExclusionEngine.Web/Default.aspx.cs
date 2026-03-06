@@ -23,6 +23,7 @@ namespace ExclusionEngine.Web
             {
                 BindClients();
                 BindRecent();
+                TryLoadEditFromQueryString();
             }
         }
 
@@ -46,6 +47,27 @@ namespace ExclusionEngine.Web
                 SearchLastNameTextBox.Text.Trim(),
                 SearchAddress1TextBox.Text.Trim());
             RecentGrid.DataBind();
+        }
+
+        public string FormatCreatedAtForBrowser(object createdAt)
+        {
+            if (createdAt == null || createdAt == DBNull.Value)
+            {
+                return string.Empty;
+            }
+
+            var utc = Convert.ToDateTime(createdAt);
+            if (utc.Kind == DateTimeKind.Unspecified)
+            {
+                utc = DateTime.SpecifyKind(utc, DateTimeKind.Utc);
+            }
+            else
+            {
+                utc = utc.ToUniversalTime();
+            }
+
+            var isoUtc = utc.ToString("o");
+            return "<span class=\"created-at-local\" data-utc-created=\"" + HttpUtility.HtmlAttributeEncode(isoUtc) + "\">" + HttpUtility.HtmlEncode(utc.ToString("yyyy-MM-dd HH:mm") + " UTC") + "</span>";
         }
 
         protected void SearchEntriesButton_Click(object sender, EventArgs e)
@@ -116,31 +138,7 @@ namespace ExclusionEngine.Web
 
             if (e.CommandName == "EditEntry")
             {
-                ClearPendingCassState();
-                var entry = Repository.GetEntryForEdit(UserId, entryId);
-
-                if (entry == null)
-                {
-                    MessageLabel.Text = "<span class='error'>Entry not found or not authorized.</span>";
-                    return;
-                }
-
-                EditingEntryId.Value = entry.EntryId.ToString();
-                ClientDropDown.SelectedValue = entry.ClientId.ToString();
-                CustomerNumberTextBox.Text = entry.CustomerNumber;
-                FirstNameTextBox.Text = entry.FirstName;
-                LastNameTextBox.Text = entry.LastName;
-                Address1TextBox.Text = entry.Address1;
-                Address2TextBox.Text = entry.Address2;
-                CityTextBox.Text = entry.City;
-                StateTextBox.Text = entry.State;
-                ZipTextBox.Text = string.IsNullOrWhiteSpace(entry.Zip4) ? entry.Zip : (entry.Zip + "-" + entry.Zip4);
-                EmailTextBox.Text = entry.Email;
-
-                ValidateAddressButton.Text = "Validate + Update";
-                ValidateAddressButton.OnClientClick = "return confirm('Save changes to this entry?');";
-                CancelEditButton.Visible = true;
-                MessageLabel.Text = "<span class='warn'>Editing existing record. Save to update.</span>";
+                StartEditingEntry(entryId);
                 return;
             }
 
@@ -159,6 +157,52 @@ namespace ExclusionEngine.Web
                     MessageLabel.Text = $"<span class='error'>{HttpUtility.HtmlEncode(ex.Message)}</span>";
                 }
             }
+        }
+
+        private void TryLoadEditFromQueryString()
+        {
+            var editIdRaw = Request.QueryString["editId"];
+            if (string.IsNullOrWhiteSpace(editIdRaw))
+            {
+                return;
+            }
+
+            if (!int.TryParse(editIdRaw, out var entryId) || entryId <= 0)
+            {
+                MessageLabel.Text = "<span class='error'>Invalid edit request.</span>";
+                return;
+            }
+
+            StartEditingEntry(entryId);
+        }
+
+        private void StartEditingEntry(int entryId)
+        {
+            ClearPendingCassState();
+            var entry = Repository.GetEntryForEdit(UserId, entryId);
+
+            if (entry == null)
+            {
+                MessageLabel.Text = "<span class='error'>Entry not found or not authorized.</span>";
+                return;
+            }
+
+            EditingEntryId.Value = entry.EntryId.ToString();
+            ClientDropDown.SelectedValue = entry.ClientId.ToString();
+            CustomerNumberTextBox.Text = entry.CustomerNumber;
+            FirstNameTextBox.Text = entry.FirstName;
+            LastNameTextBox.Text = entry.LastName;
+            Address1TextBox.Text = entry.Address1;
+            Address2TextBox.Text = entry.Address2;
+            CityTextBox.Text = entry.City;
+            StateTextBox.Text = entry.State;
+            ZipTextBox.Text = string.IsNullOrWhiteSpace(entry.Zip4) ? entry.Zip : (entry.Zip + "-" + entry.Zip4);
+            EmailTextBox.Text = entry.Email;
+
+            ValidateAddressButton.Text = "Validate + Update";
+            ValidateAddressButton.OnClientClick = "return confirm('Save changes to this entry?');";
+            CancelEditButton.Visible = true;
+            MessageLabel.Text = "<span class='warn'>Editing existing record. Save to update.</span>";
         }
 
         protected void CancelEditButton_Click(object sender, EventArgs e)

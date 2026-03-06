@@ -33,3 +33,28 @@ function cancelCassPrompt() {
   document.getElementById('ConfirmedStandardized').value = 'false';
   document.getElementById('UseOriginalAddress').value = 'false';
 }
+
+function localizeCreatedAtTimes() {
+  var nodes = document.querySelectorAll('[data-utc-created]');
+  for (var i = 0; i < nodes.length; i++) {
+    var el = nodes[i];
+    var utcValue = el.getAttribute('data-utc-created');
+    if (!utcValue) {
+      continue;
+    }
+
+    var parsed = new Date(utcValue);
+    if (isNaN(parsed.getTime())) {
+      continue;
+    }
+
+    el.innerText = parsed.toLocaleString();
+    el.title = 'UTC: ' + utcValue;
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', localizeCreatedAtTimes);
+} else {
+  localizeCreatedAtTimes();
+}

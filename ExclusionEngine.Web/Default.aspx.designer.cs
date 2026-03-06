@@ -6,6 +6,7 @@ namespace ExclusionEngine.Web
         protected global::System.Web.UI.WebControls.Label MessageLabel;
         protected global::System.Web.UI.WebControls.Button UserAdminButton;
         protected global::System.Web.UI.WebControls.Button ClientAdminButton;
+        protected global::System.Web.UI.WebControls.Button CustomerDataButton;
         protected global::System.Web.UI.WebControls.DropDownList ClientDropDown;
         protected global::System.Web.UI.WebControls.TextBox CustomerNumberTextBox;
         protected global::System.Web.UI.WebControls.TextBox FirstNameTextBox;

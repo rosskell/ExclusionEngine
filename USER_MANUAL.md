@@ -76,6 +76,7 @@ In **Recent Entries (Authorized Clients Only)**:
 - Search by **Last Name** and/or **Address 1**.
 - Click **Search** to filter.
 - Click **Clear** to reset search.
+- This grid is a quick summary view and no longer shows a separate ZIP+4 column.
 
 For each row:
 - **Edit** loads that entry into the form for update.
@@ -90,7 +91,22 @@ For each row:
 
 ---
 
-## 6) Admin-only areas
+
+## 6) Customer Data page (full columns, paging, sort)
+
+Open **Customer Data** from the dashboard to view detailed customer records.
+
+Features:
+- If you have access to multiple clients, a **Client** drop-down appears so you can filter to one client or all.
+- Uses the same search filters as Recent Entries: **Last Name contains** and **Address 1 contains**.
+- Includes full columns:
+  - CustomerNumber, FirstName, LastName, Address1, Address2, City, State, Zip, Zip4, DeliveryPointBarcode, Email, CreatedAt
+- Sorting supported on **Last Name**, **State**, and **Zip** (click column headers).
+- Paged grid with **Page Size** selector (20/50/100/250).
+- **Edit** opens that record in the main entry page for CASS validate/update workflow.
+- **Delete** removes the record after confirmation (if you have access to that client).
+
+## 7) Admin-only areas
 
 Administrators see two buttons on dashboard:
 - **User Admin**
@@ -98,7 +114,7 @@ Administrators see two buttons on dashboard:
 
 Non-admin users will not see these options.
 
-### 6.1 User Admin
+### 7.1 User Admin
 
 Use **User Admin** to:
 - Create users
@@ -129,7 +145,7 @@ Use **User Admin** to:
 
 > Note: user actions may fail if constraints are violated (for example, duplicate username/email).
 
-### 6.2 Client Admin
+### 7.2 Client Admin
 
 Use **Client Admin** to:
 - Create client records
@@ -178,7 +194,7 @@ If token is invalid/expired, request a new link.
 
 ---
 
-## 9) Best practices for users
+## 10) Best practices for users
 
 - Always confirm the selected **Client** before saving.
 - Use CASS standardized addresses unless you have a business reason not to.
