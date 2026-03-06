@@ -67,7 +67,7 @@
                 <asp:BoundField HeaderText="Customer #" DataField="CustomerNumber" />
                 <asp:BoundField HeaderText="Name" DataField="FullName" />
                 <asp:BoundField HeaderText="Address" DataField="FormattedAddress" />
-                <asp:BoundField HeaderText="DP Barcode" DataField="DeliveryPointBarcode" />
+                <asp:BoundField HeaderText="DPB" DataField="DeliveryPointBarcode" />
                 <asp:BoundField HeaderText="Email" DataField="Email" />
                 <asp:TemplateField HeaderText="Created">
                     <ItemTemplate>

@@ -110,7 +110,19 @@ namespace ExclusionEngine.Web
 
         protected void CustomerGrid_RowCommand(object sender, GridViewCommandEventArgs e)
         {
-            var rowIndex = Convert.ToInt32(e.CommandArgument);
+            if (e.CommandName != "EditEntry" && e.CommandName != "DeleteEntry")
+            {
+                return;
+            }
+
+            if (!int.TryParse(Convert.ToString(e.CommandArgument), out var rowIndex)
+                || rowIndex < 0
+                || rowIndex >= CustomerGrid.Rows.Count)
+            {
+                MessageLabel.Text = "<span class='error'>Unable to identify the selected row.</span>";
+                return;
+            }
+
             var entryId = Convert.ToInt32(CustomerGrid.DataKeys[rowIndex].Value);
 
             if (e.CommandName == "EditEntry")
@@ -119,18 +131,15 @@ namespace ExclusionEngine.Web
                 return;
             }
 
-            if (e.CommandName == "DeleteEntry")
+            try
             {
-                try
-                {
-                    Repository.DeleteEntry(UserId, entryId);
-                    MessageLabel.Text = "<span class='success'>Customer entry deleted.</span>";
-                    BindGrid();
-                }
-                catch (Exception ex)
-                {
-                    MessageLabel.Text = $"<span class='error'>{HttpUtility.HtmlEncode(ex.Message)}</span>";
-                }
+                Repository.DeleteEntry(UserId, entryId);
+                MessageLabel.Text = "<span class='success'>Customer entry deleted.</span>";
+                BindGrid();
+            }
+            catch (Exception ex)
+            {
+                MessageLabel.Text = $"<span class='error'>{HttpUtility.HtmlEncode(ex.Message)}</span>";
             }
         }
 

@@ -81,6 +81,7 @@ Demo seed account (for local testing):
 - `PrepareTask`, `ClearAddress`
 - set address fields
 - `CheckAddress`
+- map `UnitDesignator` + `UnitNumber` (when returned) into `Address2`
 - inspect `ErrorCodes`
 - `EndTask`
 

@@ -17,3 +17,6 @@ body { font-family: Segoe UI, Arial, sans-serif; background: #f5f7fa; margin: 0;
 
 .header-right { display:flex; align-items:center; gap:10px; }
 .company-logo { max-height: 58px; width: auto; }
+
+.grid-wrap { width: 100%; overflow-x: auto; }
+.wide-grid { min-width: 1500px; }

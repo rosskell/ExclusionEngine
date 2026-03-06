@@ -24,7 +24,8 @@
             <asp:Button ID="ClearSearchButton" runat="server" Text="Clear" CssClass="btn secondary" OnClick="ClearSearchButton_Click" CausesValidation="false" UseSubmitBehavior="false" />
         </div>
 
-        <asp:GridView ID="CustomerGrid" runat="server" CssClass="grid" AutoGenerateColumns="false" DataKeyNames="EntryId"
+        <div class="grid-wrap">
+        <asp:GridView ID="CustomerGrid" runat="server" CssClass="grid wide-grid" AutoGenerateColumns="false" DataKeyNames="EntryId"
             AllowPaging="true" AllowSorting="true" PageSize="20"
             OnPageIndexChanging="CustomerGrid_PageIndexChanging" OnSorting="CustomerGrid_Sorting" OnRowCommand="CustomerGrid_RowCommand">
             <Columns>
@@ -51,7 +52,7 @@
                 <asp:BoundField HeaderText="State" DataField="State" SortExpression="State" />
                 <asp:BoundField HeaderText="Zip" DataField="Zip" SortExpression="Zip" />
                 <asp:BoundField HeaderText="Zip4" DataField="Zip4" />
-                <asp:BoundField HeaderText="Delivery Point Barcode" DataField="DeliveryPointBarcode" />
+                <asp:BoundField HeaderText="DPB" DataField="DeliveryPointBarcode" />
                 <asp:BoundField HeaderText="Email" DataField="Email" />
                 <asp:TemplateField HeaderText="Created At">
                     <ItemTemplate>
@@ -60,5 +61,6 @@
                 </asp:TemplateField>
             </Columns>
         </asp:GridView>
+        </div>
     </div>
 </asp:Content>

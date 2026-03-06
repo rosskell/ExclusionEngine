@@ -65,6 +65,7 @@ namespace ExclusionEngine.Web
                 SetProperty(task, "Capitalize", 1);
                 SetProperty(task, "BusinessName", BuildBusinessName(input));
                 SetProperty(task, "AddressLine1", input.Address1 ?? string.Empty);
+                SetOptionalProperty(task, "AddressLine2", input.Address2 ?? string.Empty);
                 SetProperty(task, "City", input.City ?? string.Empty);
                 SetProperty(task, "State", (input.State ?? string.Empty).Trim());
                 SetProperty(task, "ZipCode", CombineZip(input.Zip, input.Zip4));
@@ -96,7 +97,7 @@ namespace ExclusionEngine.Web
                     FirstName = input.FirstName,
                     LastName = input.LastName,
                     Address1 = (GetProperty(task, "AddressLine1") ?? string.Empty).ToString().Trim(),
-                    Address2 = ToTitleCase(input.Address2),
+                    Address2 = BuildAddress2FromCass(task, input.Address2),
                     City = (GetProperty(task, "City") ?? string.Empty).ToString().Trim(),
                     State = (GetProperty(task, "State") ?? string.Empty).ToString().Trim().ToUpperInvariant(),
                     Zip = zip5,
@@ -292,6 +293,19 @@ namespace ExclusionEngine.Web
                 new[] { value });
         }
 
+        private static void SetOptionalProperty(object instance, string propertyName, object value)
+        {
+            try
+            {
+                SetProperty(instance, propertyName, value);
+            }
+            catch
+            {
+                // Best effort for optional COM properties.
+            }
+        }
+
+
         private static object GetProperty(object instance, string propertyName)
         {
             return instance.GetType().InvokeMember(
@@ -306,6 +320,27 @@ namespace ExclusionEngine.Web
         {
             return ((input.FirstName ?? string.Empty) + " " + (input.LastName ?? string.Empty)).Trim();
         }
+
+        private static string BuildAddress2FromCass(object task, string inputAddress2)
+        {
+            var unitDesignator = GetOptionalProperty(task, "UnitDesignator");
+            var unitNumber = GetOptionalProperty(task, "UnitNumber");
+            var cassAddressLine2 = GetOptionalProperty(task, "AddressLine2");
+
+            var unitComposite = ((unitDesignator ?? string.Empty).Trim() + " " + (unitNumber ?? string.Empty).Trim()).Trim();
+            if (!string.IsNullOrWhiteSpace(unitComposite))
+            {
+                return ToTitleCase(unitComposite);
+            }
+
+            if (!string.IsNullOrWhiteSpace(cassAddressLine2))
+            {
+                return ToTitleCase(cassAddressLine2);
+            }
+
+            return ToTitleCase(inputAddress2);
+        }
+
 
         private static CassResult BuildResult(CustomerEntryInput input, CustomerEntryInput standardized, bool hasError, string errorMessage)
         {
