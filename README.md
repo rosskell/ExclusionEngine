@@ -1,0 +1,138 @@
+# Exclusion Engine (.NET Framework 4.8 / IIS)
+
+This repository contains an **ASP.NET Web Forms** application targeting **.NET Framework 4.8** for IIS hosting.
+
+## What this implements
+
+- Client login page.
+- Users can be assigned to multiple clients and select the active client during entry.
+- Customer data capture fields:
+  - Customer Number *(optional)*
+  - First Name *(optional)*
+  - Last Name *(optional)*
+  - Address1 *(required)*
+  - Address2 *(optional)*
+  - City *(required)*
+  - State *(required 2-letter)*
+  - Zip *(optional)*
+  - Zip+4 *(derived/stored separately when returned by CASS)*
+  - Delivery Point Barcode *(stored when returned by CASS; persisted as last 3 digits / DPBC)*
+  - Email *(optional)*
+- SQL Server storage with per-user/per-client scoping.
+- Edit existing records from the Recent Entries grid or the Customer Data page.
+- Edit updates prompt for save confirmation before applying changes.
+- Recent entries are filtered to clients the current user is authorized to access (shows core summary fields).
+- Customer Data page (`CustomerData.aspx`) provides full customer columns, client filter, paging, sorting (Last Name/State/Zip), and edit/delete actions.
+- Password hashing (PBKDF2) for stored credentials.
+- Admin-only user management page (`AdminUsers.aspx`) to add/update users, admin flags, and client access mappings.
+- Client Admin deactivates clients without deleting historical customer entries.
+- Forgot password flow:
+  - `ForgotPassword.aspx` generates a token and sends a reset link to the user email.
+  - `ResetPassword.aspx` consumes the token and updates password.
+- Address standardization flow intended for **BCC Satori CASS Server** integration:
+  - Uses a Mailroom Toolkit COM ZIP task call path in `SatoriCassService` (late-bound).
+  - Before saving, entered and standardized addresses are compared.
+  - The modal allows users to **accept standardized**, **keep original**, or **cancel** and return to the populated form.
+  - If COM is unavailable/erroring, flow falls back to local normalization unless strict mode is enabled.
+
+## Project layout
+
+- `ExclusionEngine.sln`
+- `ExclusionEngine.Web/ExclusionEngine.csproj`
+- `ExclusionEngine.Web/Default.aspx` (entry form + modal confirmation)
+- `ExclusionEngine.Web/Login.aspx`
+- `ExclusionEngine.Web/AdminUsers.aspx`
+- `ExclusionEngine.Web/CustomerData.aspx`
+- `ExclusionEngine.Web/ForgotPassword.aspx`
+- `ExclusionEngine.Web/ResetPassword.aspx`
+- `ExclusionEngine.Web/App_Code/Repository.cs` (SQL access + schema/seed)
+- `ExclusionEngine.Web/App_Code/Security.cs` (password hashing/verification)
+- `ExclusionEngine.Web/App_Code/SatoriCassService.cs` (CASS integration point)
+- `ExclusionEngine.Web/App_Code/EmailService.cs` (SMTP reset email)
+
+## Documentation
+
+- End-user and admin guide: [USER_MANUAL.md](USER_MANUAL.md)
+
+## Run in IIS / Visual Studio
+
+1. Open `ExclusionEngine.sln` in Visual Studio.
+2. Restore NuGet packages (Visual Studio restore or `nuget restore ExclusionEngine.sln`).
+3. Ensure local SQL Server / LocalDB is available.
+4. Update `Web.config` connection string as needed.
+5. Optionally configure app settings in `Web.config`:
+   - `SatoriCassEndpoint`, `SatoriCassUsername`, `SatoriCassPassword`
+   - `AppBaseUrl` (used in reset links)
+   - `FromEmail` (used by SMTP sender)
+   - `CompanyLogoUrl` (optional header logo URL; defaults to `~/Images/CompuTechDirectLogo.svg`)
+   - Default logo file is included at `ExclusionEngine.Web/Images/CompuTechDirectLogo.svg` (replace with your branded image as needed).
+6. Configure SMTP in `system.net/mailSettings` (or machine config) for reset email delivery.
+7. Run the web app.
+
+Demo seed account (for local testing):
+- Username: `demo`
+- Password: `demo123`
+- Demo account is seeded as admin to bootstrap user administration.
+
+## BCC Satori CASS hookup
+
+`SatoriCassService.StandardizeAddress(...)` uses the same call sequence from your WinForms sample:
+- create ZIP task COM object
+- set MailRoom server
+- `PrepareTask`, `ClearAddress`
+- set address fields
+- `CheckAddress`
+- map `UnitDesignator` + `UnitNumber` (when returned) into `Address2`
+- inspect `ErrorCodes`
+- `EndTask`
+
+### Required config
+- `SatoriCassMailRoomServer` (preferred, e.g. `10.0.2.37:5150`)
+- One activation route:
+  - `SatoriCassProgId` (default `MRTKTASKLib.ZIPTask`), or
+  - `SatoriCassClsid` (if you have a CLSID but ProgID lookup fails), or
+  - `SatoriCassInteropPath` + `SatoriCassInteropType` (last-resort reflection load without adding project reference)
+
+### Optional config
+- `SatoriCassEndpoint` (legacy fallback server key)
+- `SatoriCassTrace` (`true`/`false`) to emit `Trace` diagnostics
+- `SatoriCassThrowOnError` (`true`/`false`) to fail requests instead of fallback
+- When CASS returns an error (for example code 100-499), the prompt now shows the CASS failure message and lets the user choose whether to proceed with original/standardized or cancel.
+- `SatoriCassRequireServerAssignment` (`true`/`false`) to require MailRoom server assignment before `PrepareTask`
+- `SatoriCassEnableInteropPathLoad` (`true`/`false`) to allow loading `SatoriCassInteropPath` (default false to avoid BadImageFormat crashes)
+
+### Important: do **not** reference `Interop.MRTKTASKLib.dll` in this WebForms project
+The `BadImageFormatException` you saw is a bitness/load-context problem. This app intentionally uses late-bound COM activation (`Type.GetTypeFromProgID`) so it does not require interop DLL loading in ASP.NET.
+
+If COM activation still fails, verify:
+- Mailroom Toolkit COM is registered on the web host.
+- IIS/IIS Express process bitness matches the COM registration (x86 vs x64).
+- For IIS Express in Visual Studio, toggle **Use 64-bit IIS Express** if needed and retry.
+
+
+### If you still see `BadImageFormatException` for `Interop.MRTKTASKLib`
+1. Remove any `Interop.MRTKTASKLib` reference from the Web project (References node and `.csproj`).
+2. Delete `bin` and `obj` folders for `ExclusionEngine.Web`.
+3. Clear Temporary ASP.NET files (`%LOCALAPPDATA%\Temp\Temporary ASP.NET Files`).
+4. Restart Visual Studio and run again.
+5. Keep IIS Express at 32-bit unless you are sure the COM registration is 64-bit.
+
+
+### Why `CreateZipTask()` can be null
+If `CreateZipTask()` returns null, activation failed for all routes (ProgID/CLSID/InteropPath).
+That usually means one of:
+- COM not registered on this machine/user context
+- bitness mismatch (x86 vs x64)
+- wrong ProgID/CLSID
+- interop DLL exists but not loadable in current process architecture
+
+Set `SatoriCassTrace=true` and check output to see which step is failing.
+
+
+### MailRoom server assignment behavior
+When `SatoriCassMailRoomServer` is set, the app now tries these assignment patterns in order:
+1. `set_MailRoomServer(ref string)`
+2. `MailRoomServer` writable property
+3. `SetMailRoomServer(string)` / `Set_MailRoomServer(string)`
+
+Enable `SatoriCassTrace=true` to see which assignment path succeeds.
