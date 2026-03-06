@@ -10,7 +10,8 @@ body { font-family: Segoe UI, Arial, sans-serif; background: #f5f7fa; margin: 0;
 .error { color: #b42318; }
 .warn { color: #b54708; }
 .success { color: #027a48; }
-.grid { width: 100%; }
+.grid { width: 100%; box-sizing: border-box; border-collapse: collapse; table-layout: fixed; }
+.grid th, .grid td { word-break: break-word; }
 .modal { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: flex; align-items: center; justify-content: center; }
 .modal.hidden { display: none; }
 .modal-content { background: white; border-radius: 8px; padding: 16px; max-width: 650px; }
@@ -18,5 +19,5 @@ body { font-family: Segoe UI, Arial, sans-serif; background: #f5f7fa; margin: 0;
 .header-right { display:flex; align-items:center; gap:10px; }
 .company-logo { max-height: 58px; width: auto; }
 
-.grid-wrap { width: 100%; overflow-x: auto; }
-.wide-grid { min-width: 1500px; }
+.grid-wrap { width: 100%; max-width: 100%; overflow-x: auto; display: block; }
+.wide-grid { min-width: 0; width: 100%; }

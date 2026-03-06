@@ -10,6 +10,7 @@
         <div class="form-grid">
             <label>Client Code</label><asp:TextBox ID="ClientCodeTextBox" runat="server" />
             <label>Client Name</label><asp:TextBox ID="ClientNameTextBox" runat="server" />
+            <label>Active</label><asp:CheckBox ID="IsActiveCheckBox" runat="server" Checked="true" />
             <asp:Button ID="SaveClientButton" runat="server" Text="Save Client" CssClass="btn" OnClick="SaveClientButton_Click" />
             <asp:Button ID="CancelClientEditButton" runat="server" Text="Cancel" CssClass="btn secondary" OnClick="CancelClientEditButton_Click" CausesValidation="false" />
         </div>
@@ -22,13 +23,14 @@
                 <asp:ButtonField Text="Edit" ButtonType="Button" CommandName="EditClient" CausesValidation="false" />
                 <asp:TemplateField>
                     <ItemTemplate>
-                        <asp:Button ID="DeleteClientButton" runat="server" Text="Delete" CommandName="DeleteClient"
+                        <asp:Button ID="DeleteClientButton" runat="server" Text="Deactivate" CommandName="DeleteClient"
                             CommandArgument="<%# ((GridViewRow)Container).RowIndex %>" CausesValidation="false"
-                            OnClientClick="return confirm('Delete this client and related records?');" />
+                            OnClientClick="return confirm('Deactivate this client? Existing customer records will be kept.');" />
                     </ItemTemplate>
                 </asp:TemplateField>
                 <asp:BoundField HeaderText="Client Code" DataField="ClientCode" />
                 <asp:BoundField HeaderText="Client Name" DataField="ClientName" />
+                <asp:CheckBoxField HeaderText="Active" DataField="IsActive" />
             </Columns>
         </asp:GridView>
     </div>

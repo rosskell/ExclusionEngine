@@ -25,6 +25,7 @@ This repository contains an **ASP.NET Web Forms** application targeting **.NET F
 - Customer Data page (`CustomerData.aspx`) provides full customer columns, client filter, paging, sorting (Last Name/State/Zip), and edit/delete actions.
 - Password hashing (PBKDF2) for stored credentials.
 - Admin-only user management page (`AdminUsers.aspx`) to add/update users, admin flags, and client access mappings.
+- Client Admin deactivates clients without deleting historical customer entries.
 - Forgot password flow:
   - `ForgotPassword.aspx` generates a token and sends a reset link to the user email.
   - `ResetPassword.aspx` consumes the token and updates password.

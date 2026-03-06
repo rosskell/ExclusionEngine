@@ -7,6 +7,7 @@ namespace ExclusionEngine.Web
         protected global::System.Web.UI.WebControls.HiddenField EditingClientId;
         protected global::System.Web.UI.WebControls.TextBox ClientCodeTextBox;
         protected global::System.Web.UI.WebControls.TextBox ClientNameTextBox;
+        protected global::System.Web.UI.WebControls.CheckBox IsActiveCheckBox;
         protected global::System.Web.UI.WebControls.Button SaveClientButton;
         protected global::System.Web.UI.WebControls.Button CancelClientEditButton;
         protected global::System.Web.UI.WebControls.GridView ClientsGrid;

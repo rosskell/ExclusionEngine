@@ -31,7 +31,8 @@ IF OBJECT_ID('dbo.Clients','U') IS NULL
 CREATE TABLE dbo.Clients (
     ClientId INT IDENTITY(1,1) PRIMARY KEY,
     ClientCode NVARCHAR(50) NOT NULL UNIQUE,
-    ClientName NVARCHAR(200) NOT NULL
+    ClientName NVARCHAR(200) NOT NULL,
+    IsActive BIT NOT NULL DEFAULT(1)
 );
 IF OBJECT_ID('dbo.UserClients','U') IS NULL
 CREATE TABLE dbo.UserClients (
@@ -77,6 +78,8 @@ IF COL_LENGTH('dbo.CustomerEntries', 'Zip4') IS NULL
     ALTER TABLE dbo.CustomerEntries ADD Zip4 NVARCHAR(4) NULL;
 IF COL_LENGTH('dbo.CustomerEntries', 'DeliveryPointBarcode') IS NULL
     ALTER TABLE dbo.CustomerEntries ADD DeliveryPointBarcode NVARCHAR(32) NULL;
+IF COL_LENGTH('dbo.Clients', 'IsActive') IS NULL
+    ALTER TABLE dbo.Clients ADD IsActive BIT NOT NULL CONSTRAINT DF_Clients_IsActive DEFAULT(1);
 ";
                 new SqlCommand(sql, conn).ExecuteNonQuery();
             }
@@ -100,13 +103,21 @@ BEGIN
         IsDisabled = 0
     WHERE Username = 'demo';
 END
+IF EXISTS (SELECT 1 FROM dbo.Clients WHERE ClientCode = 'CLI-ALPHA')
+BEGIN
+    UPDATE dbo.Clients SET IsActive = 1 WHERE ClientCode = 'CLI-ALPHA';
+END
 IF NOT EXISTS (SELECT 1 FROM dbo.Clients WHERE ClientCode = 'CLI-ALPHA')
 BEGIN
-    INSERT INTO dbo.Clients (ClientCode, ClientName) VALUES ('CLI-ALPHA', 'Alpha Logistics');
+    INSERT INTO dbo.Clients (ClientCode, ClientName, IsActive) VALUES ('CLI-ALPHA', 'Alpha Logistics', 1);
+END
+IF EXISTS (SELECT 1 FROM dbo.Clients WHERE ClientCode = 'CLI-BETA')
+BEGIN
+    UPDATE dbo.Clients SET IsActive = 1 WHERE ClientCode = 'CLI-BETA';
 END
 IF NOT EXISTS (SELECT 1 FROM dbo.Clients WHERE ClientCode = 'CLI-BETA')
 BEGIN
-    INSERT INTO dbo.Clients (ClientCode, ClientName) VALUES ('CLI-BETA', 'Beta Retail');
+    INSERT INTO dbo.Clients (ClientCode, ClientName, IsActive) VALUES ('CLI-BETA', 'Beta Retail', 1);
 END", conn);
                 cmd.Parameters.AddWithValue("@demoPasswordHash", Security.HashPassword("demo123"));
                 cmd.ExecuteNonQuery();
@@ -151,13 +162,14 @@ END", conn);
             }
         }
 
-        public static List<ClientModel> GetAllClients()
+        public static List<ClientModel> GetAllClients(bool includeInactive = false)
         {
             var result = new List<ClientModel>();
             using (var conn = new SqlConnection(ConnectionString))
-            using (var cmd = new SqlCommand("SELECT ClientId, ClientCode, ClientName FROM dbo.Clients ORDER BY ClientName", conn))
+            using (var cmd = new SqlCommand("SELECT ClientId, ClientCode, ClientName, IsActive FROM dbo.Clients WHERE @includeInactive = 1 OR IsActive = 1 ORDER BY ClientName", conn))
             {
                 conn.Open();
+                cmd.Parameters.AddWithValue("@includeInactive", includeInactive ? 1 : 0);
                 using (var reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
@@ -166,7 +178,8 @@ END", conn);
                         {
                             ClientId = reader.GetInt32(0),
                             ClientCode = reader.GetString(1),
-                            ClientName = reader.GetString(2)
+                            ClientName = reader.GetString(2),
+                            IsActive = reader.GetBoolean(3)
                         });
                     }
                 }
@@ -178,7 +191,7 @@ END", conn);
         public static ClientModel GetClientById(int clientId)
         {
             using (var conn = new SqlConnection(ConnectionString))
-            using (var cmd = new SqlCommand("SELECT ClientId, ClientCode, ClientName FROM dbo.Clients WHERE ClientId=@id", conn))
+            using (var cmd = new SqlCommand("SELECT ClientId, ClientCode, ClientName, IsActive FROM dbo.Clients WHERE ClientId=@id", conn))
             {
                 conn.Open();
                 cmd.Parameters.AddWithValue("@id", clientId);
@@ -189,7 +202,8 @@ END", conn);
                     {
                         ClientId = reader.GetInt32(0),
                         ClientCode = reader.GetString(1),
-                        ClientName = reader.GetString(2)
+                        ClientName = reader.GetString(2),
+                        IsActive = reader.GetBoolean(3)
                     };
                 }
             }
@@ -199,13 +213,14 @@ END", conn);
         {
             using (var conn = new SqlConnection(ConnectionString))
             using (var cmd = new SqlCommand(@"
-INSERT INTO dbo.Clients(ClientCode, ClientName)
-VALUES(@code, @name);
+INSERT INTO dbo.Clients(ClientCode, ClientName, IsActive)
+VALUES(@code, @name, @active);
 SELECT CAST(SCOPE_IDENTITY() AS INT);", conn))
             {
                 conn.Open();
                 cmd.Parameters.AddWithValue("@code", client.ClientCode ?? string.Empty);
                 cmd.Parameters.AddWithValue("@name", client.ClientName ?? string.Empty);
+                cmd.Parameters.AddWithValue("@active", client.IsActive ? 1 : 0);
                 return Convert.ToInt32(cmd.ExecuteScalar());
             }
         }
@@ -213,12 +228,13 @@ SELECT CAST(SCOPE_IDENTITY() AS INT);", conn))
         public static void UpdateClient(ClientModel client)
         {
             using (var conn = new SqlConnection(ConnectionString))
-            using (var cmd = new SqlCommand("UPDATE dbo.Clients SET ClientCode=@code, ClientName=@name WHERE ClientId=@id", conn))
+            using (var cmd = new SqlCommand("UPDATE dbo.Clients SET ClientCode=@code, ClientName=@name, IsActive=@active WHERE ClientId=@id", conn))
             {
                 conn.Open();
                 cmd.Parameters.AddWithValue("@id", client.ClientId);
                 cmd.Parameters.AddWithValue("@code", client.ClientCode ?? string.Empty);
                 cmd.Parameters.AddWithValue("@name", client.ClientName ?? string.Empty);
+                cmd.Parameters.AddWithValue("@active", client.IsActive ? 1 : 0);
                 cmd.ExecuteNonQuery();
             }
         }
@@ -226,30 +242,11 @@ SELECT CAST(SCOPE_IDENTITY() AS INT);", conn))
         public static void DeleteClient(int clientId)
         {
             using (var conn = new SqlConnection(ConnectionString))
+            using (var cmd = new SqlCommand("UPDATE dbo.Clients SET IsActive = 0 WHERE ClientId=@id", conn))
             {
                 conn.Open();
-                using (var tx = conn.BeginTransaction())
-                {
-                using (var delMappings = new SqlCommand("DELETE FROM dbo.UserClients WHERE ClientId=@id", conn, tx))
-                {
-                    delMappings.Parameters.AddWithValue("@id", clientId);
-                    delMappings.ExecuteNonQuery();
-                }
-
-                using (var delEntries = new SqlCommand("DELETE FROM dbo.CustomerEntries WHERE ClientId=@id", conn, tx))
-                {
-                    delEntries.Parameters.AddWithValue("@id", clientId);
-                    delEntries.ExecuteNonQuery();
-                }
-
-                using (var delClient = new SqlCommand("DELETE FROM dbo.Clients WHERE ClientId=@id", conn, tx))
-                {
-                    delClient.Parameters.AddWithValue("@id", clientId);
-                    delClient.ExecuteNonQuery();
-                }
-
-                    tx.Commit();
-                }
+                cmd.Parameters.AddWithValue("@id", clientId);
+                cmd.ExecuteNonQuery();
             }
         }
 
@@ -263,10 +260,11 @@ SELECT CAST(SCOPE_IDENTITY() AS INT);", conn))
             var result = new List<ClientModel>();
             using (var conn = new SqlConnection(ConnectionString))
             using (var cmd = new SqlCommand(@"
-SELECT c.ClientId, c.ClientCode, c.ClientName
+SELECT c.ClientId, c.ClientCode, c.ClientName, c.IsActive
 FROM dbo.Clients c
 INNER JOIN dbo.UserClients uc ON c.ClientId = uc.ClientId
 WHERE uc.UserId = @u
+  AND c.IsActive = 1
 ORDER BY c.ClientName", conn))
             {
                 conn.Open();
@@ -279,7 +277,8 @@ ORDER BY c.ClientName", conn))
                         {
                             ClientId = reader.GetInt32(0),
                             ClientCode = reader.GetString(1),
-                            ClientName = reader.GetString(2)
+                            ClientName = reader.GetString(2),
+                            IsActive = reader.GetBoolean(3)
                         });
                     }
                 }

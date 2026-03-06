@@ -150,7 +150,7 @@ Use **User Admin** to:
 Use **Client Admin** to:
 - Create client records
 - Update client code/name
-- Delete client records
+- Deactivate clients (keeps existing customer records)
 
 #### Create client
 1. Enter **Client Code** and **Client Name**.
@@ -161,9 +161,9 @@ Use **Client Admin** to:
 2. Update fields.
 3. Click **Update Client**.
 
-#### Delete client
-- Click **Delete** and confirm.
-- Deletion may remove related records depending on database constraints.
+#### Deactivate client
+- Click **Deactivate** and confirm.
+- The client is marked inactive and removed from active client selection, but existing customer records are retained.
 
 ---
 

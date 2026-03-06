@@ -33,7 +33,7 @@ namespace ExclusionEngine.Web
 
         private void BindClients()
         {
-            ClientsGrid.DataSource = Repository.GetAllClients();
+            ClientsGrid.DataSource = Repository.GetAllClients(includeInactive: true);
             ClientsGrid.DataBind();
         }
 
@@ -52,7 +52,7 @@ namespace ExclusionEngine.Web
             {
                 if (string.IsNullOrWhiteSpace(EditingClientId.Value))
                 {
-                    Repository.CreateClient(new ClientModel { ClientCode = code, ClientName = name });
+                    Repository.CreateClient(new ClientModel { ClientCode = code, ClientName = name, IsActive = IsActiveCheckBox.Checked });
                     ClientMessageLabel.Text = "<span class='success'>Client created.</span>";
                 }
                 else
@@ -61,7 +61,8 @@ namespace ExclusionEngine.Web
                     {
                         ClientId = int.Parse(EditingClientId.Value),
                         ClientCode = code,
-                        ClientName = name
+                        ClientName = name,
+                        IsActive = IsActiveCheckBox.Checked
                     });
                     ClientMessageLabel.Text = "<span class='success'>Client updated.</span>";
                 }
@@ -92,6 +93,7 @@ namespace ExclusionEngine.Web
                 EditingClientId.Value = client.ClientId.ToString();
                 ClientCodeTextBox.Text = client.ClientCode;
                 ClientNameTextBox.Text = client.ClientName;
+                IsActiveCheckBox.Checked = client.IsActive;
                 SaveClientButton.Text = "Update Client";
                 return;
             }
@@ -102,7 +104,7 @@ namespace ExclusionEngine.Web
                 {
                     Repository.DeleteClient(clientId);
                     BindClients();
-                    ClientMessageLabel.Text = "<span class='success'>Client deleted.</span>";
+                    ClientMessageLabel.Text = "<span class='success'>Client deactivated. Existing customer records were kept.</span>";
                 }
                 catch (Exception ex)
                 {
@@ -123,6 +125,7 @@ namespace ExclusionEngine.Web
             ClientCodeTextBox.Text = string.Empty;
             ClientNameTextBox.Text = string.Empty;
             SaveClientButton.Text = "Save Client";
+            IsActiveCheckBox.Checked = true;
         }
     }
 }

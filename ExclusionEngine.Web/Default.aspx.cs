@@ -1,4 +1,5 @@
 using System;
+using System.Text.RegularExpressions;
 using System.Web;
 using System.Web.UI.WebControls;
 
@@ -307,7 +308,7 @@ namespace ExclusionEngine.Web
 
             if (string.IsNullOrWhiteSpace(entry.Address1)) validationError = "Address 1 is required.";
             else if (string.IsNullOrWhiteSpace(entry.City)) validationError = "City is required.";
-            else if (string.IsNullOrWhiteSpace(entry.State) || entry.State.Length != 2) validationError = "State must be two letters.";
+            else if (!Regex.IsMatch(entry.State ?? string.Empty, "^[A-Z]{2}$")) validationError = "State must be two letters.";
 
             return string.IsNullOrEmpty(validationError);
         }

@@ -89,6 +89,15 @@ namespace ExclusionEngine.Web
 
                 var standardizedZipRaw = (GetProperty(task, "ZipCode") ?? string.Empty).ToString();
                 ParseZip(standardizedZipRaw, out var zip5, out var zip4);
+                var unitDesignator = GetOptionalProperty(task, "UnitDesignator");
+                var unitNumber = GetOptionalProperty(task, "UnitNumber");
+                var standardizedAddress2 = BuildAddress2FromCass(unitDesignator, unitNumber, GetOptionalProperty(task, "AddressLine2"), input.Address2);
+                var standardizedAddress1 = BuildAddress1FromCass(
+                    (GetProperty(task, "AddressLine1") ?? string.Empty).ToString(),
+                    standardizedAddress2,
+                    unitDesignator,
+                    unitNumber,
+                    input.Address1);
 
                 var standardized = new CustomerEntryInput
                 {
@@ -96,8 +105,8 @@ namespace ExclusionEngine.Web
                     CustomerNumber = input.CustomerNumber,
                     FirstName = input.FirstName,
                     LastName = input.LastName,
-                    Address1 = (GetProperty(task, "AddressLine1") ?? string.Empty).ToString().Trim(),
-                    Address2 = BuildAddress2FromCass(task, input.Address2),
+                    Address1 = standardizedAddress1,
+                    Address2 = standardizedAddress2,
                     City = (GetProperty(task, "City") ?? string.Empty).ToString().Trim(),
                     State = (GetProperty(task, "State") ?? string.Empty).ToString().Trim().ToUpperInvariant(),
                     Zip = zip5,
@@ -321,13 +330,9 @@ namespace ExclusionEngine.Web
             return ((input.FirstName ?? string.Empty) + " " + (input.LastName ?? string.Empty)).Trim();
         }
 
-        private static string BuildAddress2FromCass(object task, string inputAddress2)
+        private static string BuildAddress2FromCass(string unitDesignator, string unitNumber, string cassAddressLine2, string inputAddress2)
         {
-            var unitDesignator = GetOptionalProperty(task, "UnitDesignator");
-            var unitNumber = GetOptionalProperty(task, "UnitNumber");
-            var cassAddressLine2 = GetOptionalProperty(task, "AddressLine2");
-
-            var unitComposite = ((unitDesignator ?? string.Empty).Trim() + " " + (unitNumber ?? string.Empty).Trim()).Trim();
+            var unitComposite = BuildUnitComposite(unitDesignator, unitNumber);
             if (!string.IsNullOrWhiteSpace(unitComposite))
             {
                 return ToTitleCase(unitComposite);
@@ -339,6 +344,61 @@ namespace ExclusionEngine.Web
             }
 
             return ToTitleCase(inputAddress2);
+        }
+
+        private static string BuildAddress1FromCass(string cassAddressLine1, string standardizedAddress2, string unitDesignator, string unitNumber, string inputAddress1)
+        {
+            var address1 = (cassAddressLine1 ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(address1))
+            {
+                return ToTitleCase(inputAddress1);
+            }
+
+            address1 = StripTrailingSegment(address1, standardizedAddress2);
+            address1 = StripTrailingSegment(address1, BuildUnitComposite(unitDesignator, unitNumber));
+
+            return ToTitleCase(address1);
+        }
+
+        private static string BuildUnitComposite(string unitDesignator, string unitNumber)
+        {
+            return ((unitDesignator ?? string.Empty).Trim() + " " + (unitNumber ?? string.Empty).Trim()).Trim();
+        }
+
+        private static string StripTrailingSegment(string address1, string segment)
+        {
+            if (string.IsNullOrWhiteSpace(address1) || string.IsNullOrWhiteSpace(segment))
+            {
+                return address1;
+            }
+
+            var trimmedAddress1 = address1.Trim();
+            var trimmedSegment = segment.Trim();
+            var comparison = StringComparison.OrdinalIgnoreCase;
+
+            if (trimmedAddress1.Equals(trimmedSegment, comparison))
+            {
+                return trimmedAddress1;
+            }
+
+            var patterns = new[]
+            {
+                ", " + trimmedSegment,
+                " " + trimmedSegment,
+                " - " + trimmedSegment,
+                " #" + trimmedSegment,
+                "#" + trimmedSegment
+            };
+
+            foreach (var pattern in patterns)
+            {
+                if (trimmedAddress1.EndsWith(pattern, comparison))
+                {
+                    return trimmedAddress1.Substring(0, trimmedAddress1.Length - pattern.Length).TrimEnd(',', ' ', '-');
+                }
+            }
+
+            return trimmedAddress1;
         }
 
 
