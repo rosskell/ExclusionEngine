@@ -54,9 +54,61 @@ function localizeCreatedAtTimes() {
 }
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', localizeCreatedAtTimes);
+  document.addEventListener('DOMContentLoaded', function() {
+    localizeCreatedAtTimes();
+    initPhoneFormatting();
+  });
 } else {
   localizeCreatedAtTimes();
+  initPhoneFormatting();
+}
+
+
+function formatPhoneValue(rawValue) {
+  var value = rawValue || '';
+  var extMatch = value.match(/^(.*?)(?:\s*(?:ext\.?|x)\s*([a-z0-9-]*))$/i);
+  var basePart = value;
+  var extension = '';
+
+  if (extMatch) {
+    basePart = extMatch[1];
+    extension = (extMatch[2] || '').replace(/[^a-z0-9-]/gi, '');
+  }
+
+  var digits = basePart.replace(/\D/g, '');
+  var formatted = '';
+
+  if (digits.length <= 3) {
+    formatted = digits;
+  } else if (digits.length <= 6) {
+    formatted = digits.slice(0, 3) + '-' + digits.slice(3);
+  } else {
+    formatted = digits.slice(0, 3) + '-' + digits.slice(3, 6) + '-' + digits.slice(6, 10);
+    if (digits.length > 10) {
+      formatted += ' ' + digits.slice(10);
+    }
+  }
+
+  if (extension) {
+    formatted += ' ext ' + extension;
+  }
+
+  return formatted.trim();
+}
+
+function initPhoneFormatting() {
+  var phoneInputs = document.querySelectorAll('input.phone-format');
+  for (var i = 0; i < phoneInputs.length; i++) {
+    var input = phoneInputs[i];
+
+    input.value = formatPhoneValue(input.value);
+    input.addEventListener('input', function(e) {
+      e.target.value = formatPhoneValue(e.target.value);
+    });
+    input.addEventListener('blur', function(e) {
+      e.target.value = formatPhoneValue(e.target.value);
+    });
+  }
 }
 
 function toggleSelectAll(source) {
