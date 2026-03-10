@@ -283,6 +283,9 @@ body {
 .grid tbody tr:hover td { background: #f5f8ff; }
 .grid th, .grid td { word-break: break-word; }
 
+/* Bulk-select checkbox column */
+.col-select { width: 36px; text-align: center; padding: 6px 4px !important; }
+
 /* Grid row action buttons (Edit / Delete) */
 .grid td input[type=submit],
 .grid td button {

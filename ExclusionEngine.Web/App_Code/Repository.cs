@@ -420,6 +420,12 @@ WHERE EntryId = @entryId", conn))
             }
         }
 
+        public static void DeleteEntries(int userId, System.Collections.Generic.List<int> entryIds)
+        {
+            foreach (var id in entryIds)
+                DeleteEntry(userId, id);
+        }
+
         public static void DeleteEntry(int userId, int entryId)
         {
             var existing = GetEntryForEdit(userId, entryId);

@@ -58,3 +58,17 @@ if (document.readyState === 'loading') {
 } else {
   localizeCreatedAtTimes();
 }
+
+function toggleSelectAll(source) {
+  source.closest('table').querySelectorAll('tbody input[type=checkbox]')
+    .forEach(function(cb) { cb.checked = source.checked; });
+}
+
+function confirmBulkDelete(gridClass) {
+  var count = document.querySelectorAll(gridClass + ' tbody input[type=checkbox]:checked').length;
+  if (count === 0) {
+    alert('Please select at least one entry to delete.');
+    return false;
+  }
+  return confirm('Delete ' + count + ' selected entr' + (count === 1 ? 'y' : 'ies') + '?');
+}

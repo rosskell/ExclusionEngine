@@ -24,6 +24,7 @@
             </asp:DropDownList>
             <asp:Button ID="SearchButton" runat="server" Text="Search" CssClass="btn" OnClick="SearchButton_Click" CausesValidation="false" UseSubmitBehavior="false" />
             <asp:Button ID="ClearSearchButton" runat="server" Text="Clear" CssClass="btn secondary" OnClick="ClearSearchButton_Click" CausesValidation="false" UseSubmitBehavior="false" />
+            <asp:Button ID="DeleteSelectedButton" runat="server" Text="Delete Selected" CssClass="btn secondary" OnClick="DeleteSelectedButton_Click" CausesValidation="false" UseSubmitBehavior="false" OnClientClick="return confirmBulkDelete('.customer-grid');" />
         </div>
 
         <div class="grid-wrap customer-grid-wrap">
@@ -31,6 +32,16 @@
             AllowPaging="true" AllowSorting="true" PageSize="20"
             OnPageIndexChanging="CustomerGrid_PageIndexChanging" OnSorting="CustomerGrid_Sorting" OnRowCommand="CustomerGrid_RowCommand">
             <Columns>
+                <asp:TemplateField>
+                    <HeaderTemplate>
+                        <input type="checkbox" title="Select all on this page" onclick="toggleSelectAll(this)" />
+                    </HeaderTemplate>
+                    <ItemTemplate>
+                        <asp:CheckBox ID="SelectRowCheckBox" runat="server" />
+                    </ItemTemplate>
+                    <ItemStyle CssClass="col-select" />
+                    <HeaderStyle CssClass="col-select" />
+                </asp:TemplateField>
                 <asp:TemplateField>
                     <ItemTemplate>
                         <asp:Button ID="EditEntryButton" runat="server" Text="Edit" CommandName="EditEntry"

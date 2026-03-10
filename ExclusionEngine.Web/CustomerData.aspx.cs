@@ -143,6 +143,35 @@ namespace ExclusionEngine.Web
             }
         }
 
+        protected void DeleteSelectedButton_Click(object sender, EventArgs e)
+        {
+            var ids = new System.Collections.Generic.List<int>();
+            foreach (GridViewRow row in CustomerGrid.Rows)
+            {
+                if (row.RowType != DataControlRowType.DataRow) continue;
+                var cb = row.FindControl("SelectRowCheckBox") as System.Web.UI.WebControls.CheckBox;
+                if (cb != null && cb.Checked)
+                    ids.Add(Convert.ToInt32(CustomerGrid.DataKeys[row.RowIndex].Value));
+            }
+
+            if (ids.Count == 0)
+            {
+                MessageLabel.Text = "<span class='warn'>No entries selected.</span>";
+                return;
+            }
+
+            try
+            {
+                Repository.DeleteEntries(UserId, ids);
+                BindGrid();
+                MessageLabel.Text = $"<span class='success'>{ids.Count} entr{(ids.Count == 1 ? "y" : "ies")} deleted.</span>";
+            }
+            catch (Exception ex)
+            {
+                MessageLabel.Text = $"<span class='error'>{HttpUtility.HtmlEncode(ex.Message)}</span>";
+            }
+        }
+
         private void BindClientFilter()
         {
             var clients = Repository.GetClientsForUser(UserId);
