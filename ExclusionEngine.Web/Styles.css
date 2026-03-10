@@ -380,6 +380,12 @@ body {
 .customer-grid .col-address { width: 260px; }
 .customer-grid .col-email   { width: 260px; }
 
+.customer-grid td.col-email {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+
 .customer-grid td.col-select,
 .customer-grid td.col-action {
   vertical-align: middle;
