@@ -24,7 +24,7 @@
             </asp:DropDownList>
             <asp:Button ID="SearchButton" runat="server" Text="Search" CssClass="btn" OnClick="SearchButton_Click" CausesValidation="false" UseSubmitBehavior="false" />
             <asp:Button ID="ClearSearchButton" runat="server" Text="Clear" CssClass="btn secondary" OnClick="ClearSearchButton_Click" CausesValidation="false" UseSubmitBehavior="false" />
-            <asp:Button ID="DeleteSelectedButton" runat="server" Text="Delete Selected" CssClass="btn secondary" OnClick="DeleteSelectedButton_Click" CausesValidation="false" UseSubmitBehavior="false" OnClientClick="return confirmBulkDelete('.customer-grid');" />
+            <asp:Button ID="DeleteSelectedButton" runat="server" Text="Delete Selected" CssClass="btn secondary" OnClick="DeleteSelectedButton_Click" CausesValidation="false" UseSubmitBehavior="false" OnClientClick="if (!confirmBulkDelete('.customer-grid')) return false;" />
         </div>
 
         <div class="grid-wrap customer-grid-wrap">
