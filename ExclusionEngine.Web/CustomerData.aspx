@@ -45,10 +45,7 @@
                 <asp:TemplateField>
                     <ItemTemplate>
                         <asp:Button ID="EditEntryButton" runat="server" Text="Edit" CommandName="EditEntry"
-                            CommandArgument="<%# ((GridViewRow)Container).RowIndex %>" CausesValidation="false" /><br />
-                        <asp:Button ID="DeleteEntryButton" runat="server" Text="Delete" CommandName="DeleteEntry"
-                            CommandArgument="<%# ((GridViewRow)Container).RowIndex %>" CausesValidation="false"
-                            OnClientClick="return confirm('Delete this customer entry?');" />
+                            CommandArgument="<%# ((GridViewRow)Container).RowIndex %>" CausesValidation="false" />
                     </ItemTemplate>
                 </asp:TemplateField>
                 <asp:BoundField HeaderText="Client" DataField="ClientName" ItemStyle-CssClass="col-client" />
