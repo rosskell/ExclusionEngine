@@ -17,6 +17,8 @@ namespace ExclusionEngine.Web
         protected global::System.Web.UI.WebControls.TextBox StateTextBox;
         protected global::System.Web.UI.WebControls.TextBox ZipTextBox;
         protected global::System.Web.UI.WebControls.TextBox EmailTextBox;
+        protected global::System.Web.UI.WebControls.TextBox PhoneTextBox;
+        protected global::System.Web.UI.WebControls.TextBox NotesTextBox;
         protected global::System.Web.UI.WebControls.HiddenField ConfirmedStandardized;
         protected global::System.Web.UI.WebControls.HiddenField UseOriginalAddress;
         protected global::System.Web.UI.WebControls.HiddenField EditingEntryId;

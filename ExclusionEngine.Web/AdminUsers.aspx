@@ -12,10 +12,10 @@
             <label>Username</label><asp:TextBox ID="AdminUsernameTextBox" runat="server" />
             <label>Email</label><asp:TextBox ID="AdminEmailTextBox" runat="server" TextMode="Email" />
             <label>Password</label><asp:TextBox ID="AdminPasswordTextBox" runat="server" TextMode="Password" />
-            <label>Is Admin</label><asp:CheckBox ID="IsAdminCheckBox" runat="server" AutoPostBack="true" OnCheckedChanged="IsAdminCheckBox_CheckedChanged" />
-            <label>Is Disabled</label><asp:CheckBox ID="IsDisabledCheckBox" runat="server" />
+            <div class="check-row"><asp:CheckBox ID="IsAdminCheckBox" runat="server" Text="Is Admin" AutoPostBack="true" OnCheckedChanged="IsAdminCheckBox_CheckedChanged" /></div>
+            <div class="check-row"><asp:CheckBox ID="IsDisabledCheckBox" runat="server" Text="Is Disabled" /></div>
             <label>Allowed Clients</label>
-            <asp:CheckBoxList ID="ClientCheckBoxList" runat="server" RepeatColumns="2" />
+            <asp:CheckBoxList ID="ClientCheckBoxList" runat="server" CssClass="client-check-list" RepeatLayout="UnorderedList" />
 
             <asp:Button ID="SaveUserButton" runat="server" Text="Save User" CssClass="btn" OnClick="SaveUserButton_Click" />
             <asp:Button ID="CancelUserEditButton" runat="server" Text="Cancel" CssClass="btn secondary" OnClick="CancelUserEditButton_Click" CausesValidation="false" />

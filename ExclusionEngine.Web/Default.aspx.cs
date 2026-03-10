@@ -200,6 +200,8 @@ namespace ExclusionEngine.Web
             StateTextBox.Text = entry.State;
             ZipTextBox.Text = string.IsNullOrWhiteSpace(entry.Zip4) ? entry.Zip : (entry.Zip + "-" + entry.Zip4);
             EmailTextBox.Text = entry.Email;
+            PhoneTextBox.Text = entry.Phone;
+            NotesTextBox.Text = entry.Notes;
 
             ValidateAddressButton.Text = "Validate + Update";
             ValidateAddressButton.OnClientClick = "return confirm('Save changes to this entry?');";
@@ -294,13 +296,15 @@ namespace ExclusionEngine.Web
                 CustomerNumber = CustomerNumberTextBox.Text.Trim(),
                 FirstName = ToTitleCase(FirstNameTextBox.Text),
                 LastName = ToTitleCase(LastNameTextBox.Text),
-                Address1 = ToTitleCase(Address1TextBox.Text),
-                Address2 = ToTitleCase(Address2TextBox.Text),
-                City = ToTitleCase(CityTextBox.Text),
+                Address1 = Address1TextBox.Text.Trim(),
+                Address2 = Address2TextBox.Text.Trim(),
+                City = CityTextBox.Text.Trim(),
                 State = StateTextBox.Text.Trim().ToUpperInvariant(),
                 Zip = string.Empty,
                 Zip4 = string.Empty,
-                Email = EmailTextBox.Text.Trim()
+                Email = EmailTextBox.Text.Trim(),
+                Phone = PhoneTextBox.Text.Trim(),
+                Notes = NotesTextBox.Text.Trim()
             };
 
             ParseZipInput(ZipTextBox.Text, out var zip5, out var zip4);
@@ -345,6 +349,8 @@ namespace ExclusionEngine.Web
             StateTextBox.Text = string.Empty;
             ZipTextBox.Text = string.Empty;
             EmailTextBox.Text = string.Empty;
+            PhoneTextBox.Text = string.Empty;
+            NotesTextBox.Text = string.Empty;
         }
     }
 }

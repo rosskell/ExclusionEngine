@@ -112,7 +112,9 @@ namespace ExclusionEngine.Web
                     Zip = zip5,
                     Zip4 = zip4,
                     DeliveryPointBarcode = ExtractLast3Digits(GetOptionalProperty(task, "DPBarcodeString")),
-                    Email = input.Email
+                    Email = input.Email,
+                    Phone = input.Phone,
+                    Notes = input.Notes
                 };
 
                 return BuildResult(input, standardized, false, string.Empty);
@@ -454,7 +456,9 @@ namespace ExclusionEngine.Web
                 Zip = NormalizeZip(input.Zip),
                 Zip4 = NormalizeZip4(input.Zip4),
                 DeliveryPointBarcode = ExtractLast3Digits(input.DeliveryPointBarcode),
-                Email = input.Email
+                Email = input.Email,
+                Phone = input.Phone,
+                Notes = input.Notes
             };
         }
 

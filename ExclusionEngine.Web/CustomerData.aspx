@@ -13,6 +13,8 @@
             <asp:DropDownList ID="ClientFilterDropDown" runat="server" AutoPostBack="true" OnSelectedIndexChanged="ClientFilterDropDown_SelectedIndexChanged" />
             <label>Search Last Name</label><asp:TextBox ID="SearchLastNameTextBox" runat="server" />
             <label>Search Address 1</label><asp:TextBox ID="SearchAddress1TextBox" runat="server" />
+        </div>
+        <div class="action-row">
             <label>Page Size</label>
             <asp:DropDownList ID="PageSizeDropDown" runat="server" AutoPostBack="true" OnSelectedIndexChanged="PageSizeDropDown_SelectedIndexChanged">
                 <asp:ListItem Text="20" Value="20" />
@@ -32,11 +34,7 @@
                 <asp:TemplateField>
                     <ItemTemplate>
                         <asp:Button ID="EditEntryButton" runat="server" Text="Edit" CommandName="EditEntry"
-                            CommandArgument="<%# ((GridViewRow)Container).RowIndex %>" CausesValidation="false" />
-                    </ItemTemplate>
-                </asp:TemplateField>
-                <asp:TemplateField>
-                    <ItemTemplate>
+                            CommandArgument="<%# ((GridViewRow)Container).RowIndex %>" CausesValidation="false" /><br />
                         <asp:Button ID="DeleteEntryButton" runat="server" Text="Delete" CommandName="DeleteEntry"
                             CommandArgument="<%# ((GridViewRow)Container).RowIndex %>" CausesValidation="false"
                             OnClientClick="return confirm('Delete this customer entry?');" />
@@ -54,11 +52,13 @@
                 <asp:BoundField HeaderText="Zip4" DataField="Zip4" ItemStyle-CssClass="col-nowrap" />
                 <asp:BoundField HeaderText="DPB" DataField="DeliveryPointBarcode" ItemStyle-CssClass="col-nowrap" />
                 <asp:BoundField HeaderText="Email" DataField="Email" ItemStyle-CssClass="col-email" />
+                <asp:BoundField HeaderText="Phone" DataField="Phone" ItemStyle-CssClass="col-nowrap" />
                 <asp:TemplateField HeaderText="Created At">
                     <ItemTemplate>
                         <asp:Literal ID="CreatedAtLiteral" runat="server" Text='<%# FormatCreatedAtForBrowser(Eval("CreatedAt")) %>' />
                     </ItemTemplate>
-                    <ItemStyle CssClass="col-nowrap" />
+                    <ItemStyle CssClass="col-nowrap" HorizontalAlign="Center" />
+                    <HeaderStyle HorizontalAlign="Center" />
                 </asp:TemplateField>
             </Columns>
         </asp:GridView>

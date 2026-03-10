@@ -45,6 +45,8 @@ namespace ExclusionEngine.Web
         public string Zip4 { get; set; }
         public string DeliveryPointBarcode { get; set; }
         public string Email { get; set; }
+        public string Phone { get; set; }
+        public string Notes { get; set; }
 
         public string FullName => (FirstName + " " + LastName).Trim();
         public string FormattedAddress =>

@@ -48,7 +48,7 @@ function localizeCreatedAtTimes() {
       continue;
     }
 
-    el.innerText = parsed.toLocaleString();
+    el.innerText = parsed.toLocaleDateString();
     el.title = 'UTC: ' + utcValue;
   }
 }

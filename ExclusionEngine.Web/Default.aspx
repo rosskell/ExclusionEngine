@@ -23,6 +23,8 @@
             <label>State</label><asp:TextBox ID="StateTextBox" runat="server" MaxLength="2" />
             <label>Zip</label><asp:TextBox ID="ZipTextBox" runat="server" MaxLength="10" />
             <label>Email</label><asp:TextBox ID="EmailTextBox" runat="server" TextMode="Email" />
+            <label>Phone</label><asp:TextBox ID="PhoneTextBox" runat="server" />
+            <label>Notes</label><asp:TextBox ID="NotesTextBox" runat="server" TextMode="MultiLine" Rows="3" />
             <asp:HiddenField ID="ConfirmedStandardized" runat="server" Value="false" ClientIDMode="Static" />
             <asp:HiddenField ID="UseOriginalAddress" runat="server" Value="false" ClientIDMode="Static" />
             <asp:HiddenField ID="EditingEntryId" runat="server" Value="" />
@@ -55,9 +57,10 @@
         </div>
         <asp:GridView ID="RecentGrid" runat="server" CssClass="grid" AutoGenerateColumns="false" DataKeyNames="EntryId" OnRowCommand="RecentGrid_RowCommand">
             <Columns>
-                <asp:ButtonField Text="Edit" ButtonType="Button" CommandName="EditEntry" CausesValidation="false" />
                 <asp:TemplateField>
                     <ItemTemplate>
+                        <asp:Button ID="EditEntryButton" runat="server" Text="Edit" CommandName="EditEntry"
+                            CommandArgument="<%# ((GridViewRow)Container).RowIndex %>" CausesValidation="false" /><br />
                         <asp:Button ID="DeleteEntryButton" runat="server" Text="Delete" CommandName="DeleteEntry"
                             CommandArgument="<%# ((GridViewRow)Container).RowIndex %>" CausesValidation="false"
                             OnClientClick="return confirm('Delete this customer entry?');" />
@@ -67,12 +70,13 @@
                 <asp:BoundField HeaderText="Customer #" DataField="CustomerNumber" />
                 <asp:BoundField HeaderText="Name" DataField="FullName" />
                 <asp:BoundField HeaderText="Address" DataField="FormattedAddress" />
-                <asp:BoundField HeaderText="DPB" DataField="DeliveryPointBarcode" />
                 <asp:BoundField HeaderText="Email" DataField="Email" />
                 <asp:TemplateField HeaderText="Created">
                     <ItemTemplate>
                         <asp:Literal ID="CreatedAtLiteral" runat="server" Text='<%# FormatCreatedAtForBrowser(Eval("CreatedAt")) %>' />
                     </ItemTemplate>
+                    <ItemStyle HorizontalAlign="Center" />
+                    <HeaderStyle HorizontalAlign="Center" />
                 </asp:TemplateField>
             </Columns>
         </asp:GridView>
