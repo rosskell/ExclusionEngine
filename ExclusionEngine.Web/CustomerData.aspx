@@ -47,6 +47,7 @@
                         <asp:Button ID="EditEntryButton" runat="server" Text="Edit" CommandName="EditEntry"
                             CommandArgument="<%# ((GridViewRow)Container).RowIndex %>" CausesValidation="false" />
                     </ItemTemplate>
+                    <ItemStyle CssClass="col-action" />
                 </asp:TemplateField>
                 <asp:BoundField HeaderText="Client" DataField="ClientName" ItemStyle-CssClass="col-client" />
                 <asp:BoundField HeaderText="Customer #" DataField="CustomerNumber" ItemStyle-CssClass="col-nowrap" />
