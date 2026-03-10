@@ -110,7 +110,7 @@ namespace ExclusionEngine.Web
 
         protected void CustomerGrid_RowCommand(object sender, GridViewCommandEventArgs e)
         {
-            if (e.CommandName != "EditEntry" && e.CommandName != "DeleteEntry")
+            if (e.CommandName != "EditEntry")
             {
                 return;
             }
@@ -124,23 +124,7 @@ namespace ExclusionEngine.Web
             }
 
             var entryId = Convert.ToInt32(CustomerGrid.DataKeys[rowIndex].Value);
-
-            if (e.CommandName == "EditEntry")
-            {
-                Response.Redirect("~/Default.aspx?editId=" + entryId);
-                return;
-            }
-
-            try
-            {
-                Repository.DeleteEntry(UserId, entryId);
-                MessageLabel.Text = "<span class='success'>Customer entry deleted.</span>";
-                BindGrid();
-            }
-            catch (Exception ex)
-            {
-                MessageLabel.Text = $"<span class='error'>{HttpUtility.HtmlEncode(ex.Message)}</span>";
-            }
+            Response.Redirect("~/Default.aspx?editId=" + entryId);
         }
 
         protected void DeleteSelectedButton_Click(object sender, EventArgs e)
