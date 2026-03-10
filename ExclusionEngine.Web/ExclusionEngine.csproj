@@ -79,6 +79,7 @@
     <Content Include="Images\CompuTechDirectLogo.svg" />
     <Content Include="Styles.css" />
     <Content Include="Web.config" />
+    <Content Include="User_manual.md" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Code\Models.cs" />

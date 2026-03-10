@@ -7,6 +7,7 @@
                 <asp:Button ID="UserAdminButton" runat="server" Text="User Admin" PostBackUrl="~/AdminUsers.aspx" CssClass="btn" Visible="false" CausesValidation="false" UseSubmitBehavior="false" />
                 <asp:Button ID="ClientAdminButton" runat="server" Text="Client Admin" PostBackUrl="~/ClientAdmin.aspx" CssClass="btn" Visible="false" CausesValidation="false" UseSubmitBehavior="false" />
                 <asp:Button ID="CustomerDataButton" runat="server" Text="Customer Data" PostBackUrl="~/CustomerData.aspx" CssClass="btn" CausesValidation="false" UseSubmitBehavior="false" />
+                <a href="User_manual.md" class="btn secondary" target="_blank" rel="noopener">User Manual</a>
                 <asp:Button ID="LogoutButton" runat="server" Text="Log out" OnClick="LogoutButton_Click" CssClass="btn secondary" CausesValidation="false" UseSubmitBehavior="false" />
             </div>
         </div>
@@ -23,7 +24,7 @@
             <label>State</label><asp:TextBox ID="StateTextBox" runat="server" MaxLength="2" />
             <label>Zip</label><asp:TextBox ID="ZipTextBox" runat="server" MaxLength="10" />
             <label>Email</label><asp:TextBox ID="EmailTextBox" runat="server" TextMode="Email" />
-            <label>Phone</label><asp:TextBox ID="PhoneTextBox" runat="server" />
+            <label>Phone</label><asp:TextBox ID="PhoneTextBox" runat="server" CssClass="phone-format" />
             <label>Notes</label><asp:TextBox ID="NotesTextBox" runat="server" TextMode="MultiLine" Rows="3" />
             <asp:HiddenField ID="ConfirmedStandardized" runat="server" Value="false" ClientIDMode="Static" />
             <asp:HiddenField ID="UseOriginalAddress" runat="server" Value="false" ClientIDMode="Static" />
