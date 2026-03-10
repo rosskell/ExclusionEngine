@@ -79,10 +79,13 @@
     <Content Include="Images\CompuTechDirectLogo.svg" />
     <Content Include="Styles.css" />
     <Content Include="Web.config" />
+    <Content Include="GenericError.htm" />
+    <Content Include="User_manual.html" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Code\Models.cs" />
     <Compile Include="App_Code\EmailService.cs" />
+    <Compile Include="App_Code\ErrorHandling.cs" />
     <Compile Include="App_Code\Repository.cs" />
     <Compile Include="App_Code\SatoriCassService.cs" />
     <Compile Include="App_Code\Security.cs" />

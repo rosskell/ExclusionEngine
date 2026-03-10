@@ -379,3 +379,18 @@ body {
 .customer-grid .col-client  { width: 90px; }
 .customer-grid .col-address { width: 260px; }
 .customer-grid .col-email   { width: 260px; }
+
+.customer-grid td.col-email {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+
+.customer-grid td.col-select,
+.customer-grid td.col-action {
+  vertical-align: middle;
+}
+.customer-grid td.col-action input[type=submit],
+.customer-grid td.col-action button {
+  margin: 0 auto;
+}
