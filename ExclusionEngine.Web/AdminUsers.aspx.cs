@@ -137,7 +137,7 @@ namespace ExclusionEngine.Web
             }
             catch (Exception ex)
             {
-                AdminMessageLabel.Text = $"<span class='error'>{HttpUtility.HtmlEncode(ex.Message)}</span>";
+                AdminMessageLabel.Text = ErrorHandling.ToUserMessage(ex);
             }
         }
 
@@ -211,7 +211,7 @@ namespace ExclusionEngine.Web
                 }
                 catch (Exception ex)
                 {
-                    AdminMessageLabel.Text = $"<span class='error'>{HttpUtility.HtmlEncode(ex.Message)}</span>";
+                    AdminMessageLabel.Text = ErrorHandling.ToUserMessage(ex);
                 }
             }
         }
