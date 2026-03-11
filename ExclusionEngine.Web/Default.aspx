@@ -7,7 +7,7 @@
                 <asp:Button ID="UserAdminButton" runat="server" Text="User Admin" PostBackUrl="~/AdminUsers.aspx" CssClass="btn" Visible="false" CausesValidation="false" UseSubmitBehavior="false" />
                 <asp:Button ID="ClientAdminButton" runat="server" Text="Client Admin" PostBackUrl="~/ClientAdmin.aspx" CssClass="btn" Visible="false" CausesValidation="false" UseSubmitBehavior="false" />
                 <asp:Button ID="CustomerDataButton" runat="server" Text="Customer Data" PostBackUrl="~/CustomerData.aspx" CssClass="btn" CausesValidation="false" UseSubmitBehavior="false" />
-                <a href="User_manual.html" class="btn secondary" target="_blank" rel="noopener">User Manual</a>
+                <asp:Button ID="CsvImportButton" runat="server" Text="CSV Import" PostBackUrl="~/CsvImport.aspx" CssClass="btn" CausesValidation="false" UseSubmitBehavior="false" />
                 <asp:Button ID="LogoutButton" runat="server" Text="Log out" OnClick="LogoutButton_Click" CssClass="btn secondary" CausesValidation="false" UseSubmitBehavior="false" />
             </div>
         </div>
