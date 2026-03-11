@@ -25,6 +25,16 @@ namespace ExclusionEngine.Web
             Session["Username"] = user.Username;
             Session["UserEmail"] = user.Email;
             Session["IsAdmin"] = user.IsAdmin;
+
+            try
+            {
+                Repository.LogAuditEvent(user.UserId, user.Username, "LoginSuccess", "User", user.UserId.ToString(), null, Request.UserHostAddress);
+            }
+            catch
+            {
+                // Logging should not block successful login.
+            }
+
             Response.Redirect("~/Default.aspx");
         }
     }

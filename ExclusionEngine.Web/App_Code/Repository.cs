@@ -63,6 +63,19 @@ CREATE TABLE dbo.CustomerEntries (
     CONSTRAINT FK_CustomerEntries_Clients FOREIGN KEY (ClientId) REFERENCES dbo.Clients(ClientId)
 );
 
+IF OBJECT_ID('dbo.AuditLogs','U') IS NULL
+CREATE TABLE dbo.AuditLogs (
+    AuditId INT IDENTITY(1,1) PRIMARY KEY,
+    UserId INT NULL,
+    Username NVARCHAR(100) NULL,
+    Action NVARCHAR(100) NOT NULL,
+    EntityType NVARCHAR(100) NULL,
+    EntityId NVARCHAR(50) NULL,
+    Details NVARCHAR(1000) NULL,
+    IpAddress NVARCHAR(64) NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+
 IF COL_LENGTH('dbo.Users', 'Email') IS NULL
     ALTER TABLE dbo.Users ADD Email NVARCHAR(200) NULL;
 IF COL_LENGTH('dbo.Users', 'IsAdmin') IS NULL
@@ -293,7 +306,7 @@ SELECT CASE WHEN EXISTS (
             }
         }
 
-        public static void SaveEntry(int userId, CustomerEntryInput input)
+        public static int SaveEntry(int userId, CustomerEntryInput input)
         {
             if (!UserHasClientAccess(userId, input.ClientId))
             {
@@ -305,7 +318,8 @@ SELECT CASE WHEN EXISTS (
 INSERT INTO dbo.CustomerEntries
 (UserId, ClientId, CustomerNumber, FirstName, LastName, Address1, Address2, City, State, Zip, Zip4, DeliveryPointBarcode, Email, Notes, Phone)
 VALUES
-(@u, @c, @n, @fn, @ln, @a1, @a2, @city, @st, @zip, @zip4, @dpb, @email, @notes, @phone)", conn))
+(@u, @c, @n, @fn, @ln, @a1, @a2, @city, @st, @zip, @zip4, @dpb, @email, @notes, @phone);
+SELECT CAST(SCOPE_IDENTITY() AS INT);", conn))
             {
                 conn.Open();
                 cmd.Parameters.AddWithValue("@u", userId);
@@ -323,7 +337,7 @@ VALUES
                 cmd.Parameters.AddWithValue("@email", string.IsNullOrWhiteSpace(input.Email) ? (object)DBNull.Value : input.Email);
                 cmd.Parameters.AddWithValue("@notes", string.IsNullOrWhiteSpace(input.Notes) ? (object)DBNull.Value : input.Notes);
                 cmd.Parameters.AddWithValue("@phone", string.IsNullOrWhiteSpace(input.Phone) ? (object)DBNull.Value : input.Phone);
-                cmd.ExecuteNonQuery();
+                return Convert.ToInt32(cmd.ExecuteScalar());
             }
         }
 
@@ -439,6 +453,25 @@ WHERE EntryId = @entryId", conn))
             {
                 conn.Open();
                 cmd.Parameters.AddWithValue("@entryId", entryId);
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        public static void LogAuditEvent(int? userId, string username, string action, string entityType = null, string entityId = null, string details = null, string ipAddress = null)
+        {
+            using (var conn = new SqlConnection(ConnectionString))
+            using (var cmd = new SqlCommand(@"
+INSERT INTO dbo.AuditLogs (UserId, Username, Action, EntityType, EntityId, Details, IpAddress)
+VALUES (@userId, @username, @action, @entityType, @entityId, @details, @ipAddress)", conn))
+            {
+                conn.Open();
+                cmd.Parameters.AddWithValue("@userId", userId.HasValue ? (object)userId.Value : DBNull.Value);
+                cmd.Parameters.AddWithValue("@username", string.IsNullOrWhiteSpace(username) ? (object)DBNull.Value : username);
+                cmd.Parameters.AddWithValue("@action", action ?? string.Empty);
+                cmd.Parameters.AddWithValue("@entityType", string.IsNullOrWhiteSpace(entityType) ? (object)DBNull.Value : entityType);
+                cmd.Parameters.AddWithValue("@entityId", string.IsNullOrWhiteSpace(entityId) ? (object)DBNull.Value : entityId);
+                cmd.Parameters.AddWithValue("@details", string.IsNullOrWhiteSpace(details) ? (object)DBNull.Value : details);
+                cmd.Parameters.AddWithValue("@ipAddress", string.IsNullOrWhiteSpace(ipAddress) ? (object)DBNull.Value : ipAddress);
                 cmd.ExecuteNonQuery();
             }
         }
