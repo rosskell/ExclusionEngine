@@ -8,6 +8,7 @@ namespace ExclusionEngine.Web
         protected global::System.Web.UI.WebControls.TextBox AdminUsernameTextBox;
         protected global::System.Web.UI.WebControls.TextBox AdminEmailTextBox;
         protected global::System.Web.UI.WebControls.TextBox AdminPasswordTextBox;
+        protected global::System.Web.UI.WebControls.TextBox AdminCompanyNameTextBox;
         protected global::System.Web.UI.WebControls.CheckBox IsAdminCheckBox;
         protected global::System.Web.UI.WebControls.CheckBox IsDisabledCheckBox;
         protected global::System.Web.UI.WebControls.CheckBoxList ClientCheckBoxList;
