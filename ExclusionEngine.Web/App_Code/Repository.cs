@@ -97,6 +97,8 @@ IF COL_LENGTH('dbo.CustomerEntries', 'Phone') IS NULL
     ALTER TABLE dbo.CustomerEntries ADD Phone NVARCHAR(30) NULL;
 IF COL_LENGTH('dbo.Clients', 'IsActive') IS NULL
     ALTER TABLE dbo.Clients ADD IsActive BIT NOT NULL CONSTRAINT DF_Clients_IsActive DEFAULT(1);
+IF COL_LENGTH('dbo.Users', 'CompanyName') IS NULL
+    ALTER TABLE dbo.Users ADD CompanyName NVARCHAR(200) NULL;
 ";
                 new SqlCommand(sql, conn).ExecuteNonQuery();
             }
@@ -563,10 +565,11 @@ ORDER BY ce.CreatedAt DESC", conn))
         {
             using (var conn = new SqlConnection(ConnectionString))
             using (var cmd = new SqlCommand(@"
-SELECT 
+SELECT
     u.UserId,
     u.Username,
     COALESCE(u.Email, '') AS Email,
+    COALESCE(u.CompanyName, '') AS CompanyName,
     u.IsAdmin,
     u.IsDisabled,
     CASE WHEN u.IsAdmin = 1 THEN '[ALL CLIENTS]'
@@ -596,7 +599,7 @@ ORDER BY u.Username", conn))
                 conn.Open();
                 UserAdminModel model = null;
 
-                using (var cmd = new SqlCommand("SELECT UserId, Username, COALESCE(Email,''), IsAdmin, IsDisabled FROM dbo.Users WHERE UserId=@id", conn))
+                using (var cmd = new SqlCommand("SELECT UserId, Username, COALESCE(Email,''), IsAdmin, IsDisabled, COALESCE(CompanyName,'') FROM dbo.Users WHERE UserId=@id", conn))
                 {
                     cmd.Parameters.AddWithValue("@id", userId);
                     using (var reader = cmd.ExecuteReader())
@@ -608,7 +611,8 @@ ORDER BY u.Username", conn))
                             Username = reader.GetString(1),
                             Email = reader.GetString(2),
                             IsAdmin = reader.GetBoolean(3),
-                            IsDisabled = reader.GetBoolean(4)
+                            IsDisabled = reader.GetBoolean(4),
+                            CompanyName = reader.GetString(5)
                         };
                     }
                 }
@@ -638,13 +642,14 @@ ORDER BY u.Username", conn))
                 {
                     int userId;
                     using (var cmd = new SqlCommand(@"
-INSERT INTO dbo.Users(Username, PasswordHash, Email, IsAdmin, IsDisabled)
-VALUES(@username, @passwordHash, @email, @isAdmin, @isDisabled);
+INSERT INTO dbo.Users(Username, PasswordHash, Email, CompanyName, IsAdmin, IsDisabled)
+VALUES(@username, @passwordHash, @email, @companyName, @isAdmin, @isDisabled);
 SELECT CAST(SCOPE_IDENTITY() AS INT);", conn, tx))
                     {
                         cmd.Parameters.AddWithValue("@username", user.Username ?? string.Empty);
                         cmd.Parameters.AddWithValue("@passwordHash", Security.HashPassword(password ?? string.Empty));
                         cmd.Parameters.AddWithValue("@email", string.IsNullOrWhiteSpace(user.Email) ? (object)DBNull.Value : user.Email.Trim());
+                        cmd.Parameters.AddWithValue("@companyName", string.IsNullOrWhiteSpace(user.CompanyName) ? (object)DBNull.Value : user.CompanyName.Trim());
                         cmd.Parameters.AddWithValue("@isAdmin", user.IsAdmin);
                         cmd.Parameters.AddWithValue("@isDisabled", user.IsDisabled);
                         userId = Convert.ToInt32(cmd.ExecuteScalar());
@@ -668,6 +673,7 @@ SELECT CAST(SCOPE_IDENTITY() AS INT);", conn, tx))
 UPDATE dbo.Users
 SET Username = @username,
     Email = @email,
+    CompanyName = @companyName,
     IsAdmin = @isAdmin,
     IsDisabled = @isDisabled";
 
@@ -683,6 +689,7 @@ SET Username = @username,
                         cmd.Parameters.AddWithValue("@userId", user.UserId);
                         cmd.Parameters.AddWithValue("@username", user.Username ?? string.Empty);
                         cmd.Parameters.AddWithValue("@email", string.IsNullOrWhiteSpace(user.Email) ? (object)DBNull.Value : user.Email.Trim());
+                        cmd.Parameters.AddWithValue("@companyName", string.IsNullOrWhiteSpace(user.CompanyName) ? (object)DBNull.Value : user.CompanyName.Trim());
                         cmd.Parameters.AddWithValue("@isAdmin", user.IsAdmin);
                         cmd.Parameters.AddWithValue("@isDisabled", user.IsDisabled);
                         if (!string.IsNullOrWhiteSpace(newPassword))

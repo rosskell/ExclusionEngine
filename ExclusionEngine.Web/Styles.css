@@ -286,6 +286,9 @@ body {
 /* Bulk-select checkbox column */
 .col-select { width: 36px; text-align: center; padding: 6px 4px !important; }
 
+/* User Admin actions column — keeps buttons from overlapping */
+.grid td.col-actions { white-space: nowrap; width: 1%; }
+
 /* Grid row action buttons (Edit / Delete) */
 .grid td input[type=submit],
 .grid td button {
