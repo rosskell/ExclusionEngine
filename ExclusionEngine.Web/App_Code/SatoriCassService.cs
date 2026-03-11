@@ -417,6 +417,14 @@ namespace ExclusionEngine.Web
 
         private static string BuildCassErrorMessage(object task, int errorCode)
         {
+            // Prefer human-readable description from the BCC result code lookup table.
+            var bccDescription = Repository.GetBccResultCodeDescription(errorCode);
+            if (!string.IsNullOrWhiteSpace(bccDescription))
+            {
+                return "CASS validation failed with code " + errorCode + ": " + bccDescription;
+            }
+
+            // Fall back to the error string reported by the COM task object.
             var message = string.Empty;
             try
             {

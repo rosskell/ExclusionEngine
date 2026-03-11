@@ -166,14 +166,27 @@ END
             }
         }
 
-        public static List<ClientModel> GetAllClients(bool includeInactive = false)
+        public static List<ClientModel> GetAllClients(bool includeInactive = false, string clientCodeFilter = null, string clientNameFilter = null, int? activeFilter = null)
         {
             var result = new List<ClientModel>();
             using (var conn = new SqlConnection(ConnectionString))
-            using (var cmd = new SqlCommand("SELECT ClientId, ClientCode, ClientName, IsActive FROM dbo.Clients WHERE @includeInactive = 1 OR IsActive = 1 ORDER BY ClientName", conn))
+            using (var cmd = new SqlCommand(@"
+SELECT ClientId, ClientCode, ClientName, IsActive FROM dbo.Clients
+WHERE (
+    @activeFilter != -1
+    OR @includeInactive = 1
+    OR IsActive = 1
+)
+AND (@activeFilter = -1 OR IsActive = CASE WHEN @activeFilter = 1 THEN 1 ELSE 0 END)
+AND (@code = '' OR ClientCode LIKE '%' + @code + '%')
+AND (@name = '' OR ClientName LIKE '%' + @name + '%')
+ORDER BY ClientName", conn))
             {
                 conn.Open();
                 cmd.Parameters.AddWithValue("@includeInactive", includeInactive ? 1 : 0);
+                cmd.Parameters.AddWithValue("@activeFilter", activeFilter.HasValue ? activeFilter.Value : -1);
+                cmd.Parameters.AddWithValue("@code", clientCodeFilter ?? string.Empty);
+                cmd.Parameters.AddWithValue("@name", clientNameFilter ?? string.Empty);
                 using (var reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
@@ -190,6 +203,25 @@ END
             }
 
             return result;
+        }
+
+        public static string GetBccResultCodeDescription(int code)
+        {
+            try
+            {
+                using (var conn = new SqlConnection(ConnectionString))
+                using (var cmd = new SqlCommand("SELECT Description FROM dbo.BCC_ResultCodeLookup WHERE Code = @code", conn))
+                {
+                    conn.Open();
+                    cmd.Parameters.AddWithValue("@code", code);
+                    var result = cmd.ExecuteScalar();
+                    return (result == null || result == DBNull.Value) ? string.Empty : result.ToString();
+                }
+            }
+            catch
+            {
+                return string.Empty;
+            }
         }
 
         public static ClientModel GetClientById(int clientId)
