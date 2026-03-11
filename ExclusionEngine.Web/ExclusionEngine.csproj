@@ -73,6 +73,7 @@
     <Content Include="AdminUsers.aspx" />
     <Content Include="ClientAdmin.aspx" />
     <Content Include="CustomerData.aspx" />
+    <Content Include="CsvImport.aspx" />
     <Content Include="Global.asax" />
     <Content Include="Login.aspx" />
     <Content Include="Scripts\site.js" />
@@ -97,6 +98,13 @@
     <Compile Include="CustomerData.aspx.cs">
       <SubType>ASPXCodeBehind</SubType>
       <DependentUpon>CustomerData.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="CsvImport.aspx.cs">
+      <SubType>ASPXCodeBehind</SubType>
+      <DependentUpon>CsvImport.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="CsvImport.aspx.designer.cs">
+      <DependentUpon>CsvImport.aspx</DependentUpon>
     </Compile>
     <Compile Include="Default.aspx.cs">
       <SubType>ASPXCodeBehind</SubType>
