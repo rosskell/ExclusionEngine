@@ -244,6 +244,11 @@ body {
   grid-template-columns: auto minmax(120px, 1fr) auto minmax(120px, 1fr) auto minmax(120px, 1fr);
 }
 
+/* Recent Entries filters — label+dropdown + label+text + label+text + 2 buttons */
+.recent-entries-filters {
+  grid-template-columns: auto minmax(120px, 1fr) auto minmax(120px, 1fr) auto minmax(120px, 1fr) auto auto;
+}
+
 /* ============================================================
    Status messages
    ============================================================ */

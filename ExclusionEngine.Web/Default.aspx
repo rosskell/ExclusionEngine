@@ -50,7 +50,9 @@
 
     <div class="card">
         <h3>Recent Entries (Authorized Clients Only)</h3>
-        <div class="search-row">
+        <div class="search-row recent-entries-filters">
+            <label>Client</label>
+            <asp:DropDownList ID="SearchClientDropDown" runat="server" />
             <label>Search Last Name</label><asp:TextBox ID="SearchLastNameTextBox" runat="server" />
             <label>Search Address 1</label><asp:TextBox ID="SearchAddress1TextBox" runat="server" />
             <asp:Button ID="SearchEntriesButton" runat="server" Text="Search" CssClass="btn" OnClick="SearchEntriesButton_Click" CausesValidation="false" UseSubmitBehavior="false" />

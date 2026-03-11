@@ -40,14 +40,24 @@ namespace ExclusionEngine.Web
             ClientDropDown.DataTextField = "ClientDisplay";
             ClientDropDown.DataValueField = "ClientId";
             ClientDropDown.DataBind();
+
+            SearchClientDropDown.Items.Clear();
+            SearchClientDropDown.Items.Add(new System.Web.UI.WebControls.ListItem("All Clients", "0"));
+            foreach (var c in clients)
+                SearchClientDropDown.Items.Add(new System.Web.UI.WebControls.ListItem(c.ClientDisplay, c.ClientId.ToString()));
         }
 
         private void BindRecent()
         {
+            int? clientId = null;
+            if (int.TryParse(SearchClientDropDown.SelectedValue, out int parsedClientId) && parsedClientId > 0)
+                clientId = parsedClientId;
+
             RecentGrid.DataSource = Repository.GetRecentEntriesForUser(
                 UserId,
                 SearchLastNameTextBox.Text.Trim(),
-                SearchAddress1TextBox.Text.Trim());
+                SearchAddress1TextBox.Text.Trim(),
+                clientId);
             RecentGrid.DataBind();
         }
 
@@ -79,6 +89,7 @@ namespace ExclusionEngine.Web
 
         protected void ClearSearchButton_Click(object sender, EventArgs e)
         {
+            SearchClientDropDown.SelectedValue = "0";
             SearchLastNameTextBox.Text = string.Empty;
             SearchAddress1TextBox.Text = string.Empty;
             BindRecent();
