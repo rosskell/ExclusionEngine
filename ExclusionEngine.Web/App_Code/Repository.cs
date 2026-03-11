@@ -510,7 +510,7 @@ VALUES (@userId, @username, @action, @entityType, @entityId, @details, @ipAddres
             }
         }
 
-        public static DataTable GetRecentEntriesForUser(int userId, string lastNameContains = null, string address1Contains = null)
+        public static DataTable GetRecentEntriesForUser(int userId, string lastNameContains = null, string address1Contains = null, int? clientId = null)
         {
             using (var conn = new SqlConnection(ConnectionString))
             using (var cmd = new SqlCommand(@"
@@ -534,6 +534,7 @@ WHERE (
 )
 AND (@lastName = '' OR ce.LastName LIKE '%' + @lastName + '%')
 AND (@address1 = '' OR ce.Address1 LIKE '%' + @address1 + '%')
+AND (@clientId = 0 OR ce.ClientId = @clientId)
 ORDER BY ce.CreatedAt DESC", conn))
             {
                 conn.Open();
@@ -541,6 +542,7 @@ ORDER BY ce.CreatedAt DESC", conn))
                 cmd.Parameters.AddWithValue("@isAdmin", IsAdminUser(userId));
                 cmd.Parameters.AddWithValue("@lastName", lastNameContains ?? string.Empty);
                 cmd.Parameters.AddWithValue("@address1", address1Contains ?? string.Empty);
+                cmd.Parameters.AddWithValue("@clientId", clientId.GetValueOrDefault());
                 var dt = new DataTable();
                 dt.Load(cmd.ExecuteReader());
                 return dt;
