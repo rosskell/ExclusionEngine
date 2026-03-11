@@ -70,6 +70,7 @@ namespace ExclusionEngine.Web
         {
             var username = AdminUsernameTextBox.Text.Trim();
             var email = AdminEmailTextBox.Text.Trim();
+            var companyName = AdminCompanyNameTextBox.Text.Trim();
             var password = AdminPasswordTextBox.Text;
             var clientIds = IsAdminCheckBox.Checked
                 ? new System.Collections.Generic.List<int>()
@@ -104,6 +105,7 @@ namespace ExclusionEngine.Web
                     {
                         Username = username,
                         Email = email,
+                        CompanyName = companyName,
                         IsAdmin = IsAdminCheckBox.Checked,
                         IsDisabled = IsDisabledCheckBox.Checked,
                         ClientIds = clientIds
@@ -124,6 +126,7 @@ namespace ExclusionEngine.Web
                         UserId = editUserId,
                         Username = username,
                         Email = email,
+                        CompanyName = companyName,
                         IsAdmin = IsAdminCheckBox.Checked,
                         IsDisabled = IsDisabledCheckBox.Checked,
                         ClientIds = clientIds
@@ -158,6 +161,7 @@ namespace ExclusionEngine.Web
                 EditingUserId.Value = user.UserId.ToString();
                 AdminUsernameTextBox.Text = user.Username;
                 AdminEmailTextBox.Text = user.Email;
+                AdminCompanyNameTextBox.Text = user.CompanyName;
                 AdminPasswordTextBox.Text = string.Empty;
                 IsAdminCheckBox.Checked = user.IsAdmin;
                 IsDisabledCheckBox.Checked = user.IsDisabled;
@@ -227,6 +231,7 @@ namespace ExclusionEngine.Web
             EditingUserId.Value = string.Empty;
             AdminUsernameTextBox.Text = string.Empty;
             AdminEmailTextBox.Text = string.Empty;
+            AdminCompanyNameTextBox.Text = string.Empty;
             AdminPasswordTextBox.Text = string.Empty;
             IsAdminCheckBox.Checked = false;
             IsDisabledCheckBox.Checked = false;

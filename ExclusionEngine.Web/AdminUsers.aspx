@@ -12,6 +12,7 @@
             <label>Username</label><asp:TextBox ID="AdminUsernameTextBox" runat="server" />
             <label>Email</label><asp:TextBox ID="AdminEmailTextBox" runat="server" TextMode="Email" />
             <label>Password</label><asp:TextBox ID="AdminPasswordTextBox" runat="server" TextMode="Password" />
+            <label>Company Name</label><asp:TextBox ID="AdminCompanyNameTextBox" runat="server" />
             <div class="check-row"><asp:CheckBox ID="IsAdminCheckBox" runat="server" Text="Is Admin" AutoPostBack="true" OnCheckedChanged="IsAdminCheckBox_CheckedChanged" /></div>
             <div class="check-row"><asp:CheckBox ID="IsDisabledCheckBox" runat="server" Text="Is Disabled" /></div>
             <label>Allowed Clients</label>
@@ -24,23 +25,28 @@
 
     <div class="card">
         <h3>Users</h3>
-        <asp:GridView ID="UsersGrid" runat="server" AutoGenerateColumns="false" DataKeyNames="UserId" OnRowCommand="UsersGrid_RowCommand" CssClass="grid">
-            <Columns>
-                <asp:ButtonField Text="Edit" ButtonType="Button" CommandName="EditUser" CausesValidation="false" />
-                <asp:ButtonField Text="Disable/Enable" ButtonType="Button" CommandName="ToggleDisable" CausesValidation="false" />
-                <asp:TemplateField>
-                    <ItemTemplate>
-                        <asp:Button ID="DeleteUserButton" runat="server" Text="Delete" CommandName="DeleteUser"
-                            CommandArgument="<%# ((GridViewRow)Container).RowIndex %>" CausesValidation="false"
-                            OnClientClick="return confirm('Delete this user?');" />
-                    </ItemTemplate>
-                </asp:TemplateField>
-                <asp:BoundField HeaderText="Username" DataField="Username" />
-                <asp:BoundField HeaderText="Email" DataField="Email" />
-                <asp:CheckBoxField HeaderText="Admin" DataField="IsAdmin" />
-                <asp:CheckBoxField HeaderText="Disabled" DataField="IsDisabled" />
-                <asp:BoundField HeaderText="Clients" DataField="ClientCodes" />
-            </Columns>
-        </asp:GridView>
+        <div class="grid-wrap">
+            <asp:GridView ID="UsersGrid" runat="server" AutoGenerateColumns="false" DataKeyNames="UserId" OnRowCommand="UsersGrid_RowCommand" CssClass="grid">
+                <Columns>
+                    <asp:TemplateField HeaderText="Actions" ItemStyle-CssClass="col-actions">
+                        <ItemTemplate>
+                            <asp:Button ID="EditUserButton" runat="server" Text="Edit" CommandName="EditUser"
+                                CommandArgument="<%# ((GridViewRow)Container).RowIndex %>" CausesValidation="false" />
+                            <asp:Button ID="ToggleDisableButton" runat="server" Text="Disable/Enable" CommandName="ToggleDisable"
+                                CommandArgument="<%# ((GridViewRow)Container).RowIndex %>" CausesValidation="false" />
+                            <asp:Button ID="DeleteUserButton" runat="server" Text="Delete" CommandName="DeleteUser"
+                                CommandArgument="<%# ((GridViewRow)Container).RowIndex %>" CausesValidation="false"
+                                OnClientClick="return confirm('Delete this user?');" />
+                        </ItemTemplate>
+                    </asp:TemplateField>
+                    <asp:BoundField HeaderText="Username" DataField="Username" />
+                    <asp:BoundField HeaderText="Email" DataField="Email" />
+                    <asp:BoundField HeaderText="Company" DataField="CompanyName" />
+                    <asp:CheckBoxField HeaderText="Admin" DataField="IsAdmin" />
+                    <asp:CheckBoxField HeaderText="Disabled" DataField="IsDisabled" />
+                    <asp:BoundField HeaderText="Clients" DataField="ClientCodes" />
+                </Columns>
+            </asp:GridView>
+        </div>
     </div>
 </asp:Content>
