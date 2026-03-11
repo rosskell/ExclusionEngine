@@ -14,6 +14,10 @@ namespace ExclusionEngine.Web
         protected global::System.Web.UI.WebControls.CheckBoxList ClientCheckBoxList;
         protected global::System.Web.UI.WebControls.Button SaveUserButton;
         protected global::System.Web.UI.WebControls.Button CancelUserEditButton;
+        protected global::System.Web.UI.WebControls.TextBox SearchUsernameTextBox;
+        protected global::System.Web.UI.WebControls.TextBox SearchCompanyTextBox;
+        protected global::System.Web.UI.WebControls.DropDownList StatusFilterDropDown;
+        protected global::System.Web.UI.WebControls.Button SearchUsersButton;
         protected global::System.Web.UI.WebControls.GridView UsersGrid;
     }
 }

@@ -561,7 +561,7 @@ ORDER BY ce.CreatedAt DESC", conn))
             }
         }
 
-        public static DataTable GetAllUsersForAdmin()
+        public static DataTable GetAllUsersForAdmin(string usernameFilter = null, string companyFilter = null, int? disabledFilter = null)
         {
             using (var conn = new SqlConnection(ConnectionString))
             using (var cmd = new SqlCommand(@"
@@ -583,9 +583,15 @@ SELECT
          ).value('.', 'nvarchar(max)'), 1, 2, '')
     END AS ClientCodes
 FROM dbo.Users u
+WHERE (@username = '' OR u.Username LIKE '%' + @username + '%')
+  AND (@company  = '' OR u.CompanyName LIKE '%' + @company + '%')
+  AND (@disabled = -1 OR u.IsDisabled = CASE WHEN @disabled = 1 THEN 1 ELSE 0 END)
 ORDER BY u.Username", conn))
             {
                 conn.Open();
+                cmd.Parameters.AddWithValue("@username", usernameFilter ?? string.Empty);
+                cmd.Parameters.AddWithValue("@company",  companyFilter  ?? string.Empty);
+                cmd.Parameters.AddWithValue("@disabled", disabledFilter.HasValue ? disabledFilter.Value : -1);
                 var dt = new DataTable();
                 dt.Load(cmd.ExecuteReader());
                 return dt;

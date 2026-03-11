@@ -289,6 +289,9 @@ body {
 /* User Admin actions column — keeps buttons from overlapping */
 .grid td.col-actions { white-space: nowrap; width: 1%; }
 
+/* User search inputs in action-row */
+.search-input { width: 140px; }
+
 /* Grid row action buttons (Edit / Delete) */
 .grid td input[type=submit],
 .grid td button {

@@ -25,6 +25,19 @@
 
     <div class="card">
         <h3>Users</h3>
+        <div class="action-row">
+            <label>Username</label>
+            <asp:TextBox ID="SearchUsernameTextBox" runat="server" CssClass="search-input" />
+            <label>Company</label>
+            <asp:TextBox ID="SearchCompanyTextBox" runat="server" CssClass="search-input" />
+            <label>Status</label>
+            <asp:DropDownList ID="StatusFilterDropDown" runat="server">
+                <asp:ListItem Text="All" Value="" />
+                <asp:ListItem Text="Enabled" Value="0" />
+                <asp:ListItem Text="Disabled" Value="1" />
+            </asp:DropDownList>
+            <asp:Button ID="SearchUsersButton" runat="server" Text="Search" CssClass="btn" OnClick="SearchUsersButton_Click" CausesValidation="false" />
+        </div>
         <div class="grid-wrap">
             <asp:GridView ID="UsersGrid" runat="server" AutoGenerateColumns="false" DataKeyNames="UserId" OnRowCommand="UsersGrid_RowCommand" CssClass="grid">
                 <Columns>
@@ -32,7 +45,9 @@
                         <ItemTemplate>
                             <asp:Button ID="EditUserButton" runat="server" Text="Edit" CommandName="EditUser"
                                 CommandArgument="<%# ((GridViewRow)Container).RowIndex %>" CausesValidation="false" />
-                            <asp:Button ID="ToggleDisableButton" runat="server" Text="Disable/Enable" CommandName="ToggleDisable"
+                            <asp:Button ID="ToggleDisableButton" runat="server"
+                                Text='<%# Convert.ToBoolean(Eval("IsDisabled")) ? "Enable" : "Disable" %>'
+                                CommandName="ToggleDisable"
                                 CommandArgument="<%# ((GridViewRow)Container).RowIndex %>" CausesValidation="false" />
                             <asp:Button ID="DeleteUserButton" runat="server" Text="Delete" CommandName="DeleteUser"
                                 CommandArgument="<%# ((GridViewRow)Container).RowIndex %>" CausesValidation="false"
