@@ -8,12 +8,26 @@ namespace ExclusionEngine.Web
 {
     public partial class CsvImport
     {
+        // Step 1: Upload
+        protected global::System.Web.UI.WebControls.Panel UploadPanel;
         protected global::System.Web.UI.WebControls.Label MessageLabel;
         protected global::System.Web.UI.WebControls.DropDownList ClientDropDown;
         protected global::System.Web.UI.WebControls.FileUpload CsvFileUpload;
-        protected global::System.Web.UI.WebControls.Button ImportButton;
+        protected global::System.Web.UI.WebControls.Button PreviewButton;
+
+        // Step 2: Preview & Edit
+        protected global::System.Web.UI.WebControls.Panel PreviewPanel;
+        protected global::System.Web.UI.WebControls.Label PreviewMessageLabel;
+        protected global::System.Web.UI.WebControls.Button ImportSelectedTopButton;
+        protected global::System.Web.UI.WebControls.Button StartOverButton;
+        protected global::System.Web.UI.WebControls.GridView PreviewGrid;
+        protected global::System.Web.UI.WebControls.Button ImportSelectedBottomButton;
+        protected global::System.Web.UI.WebControls.Button StartOverBottomButton;
+
+        // Step 3: Results
         protected global::System.Web.UI.WebControls.Panel ResultsPanel;
         protected global::System.Web.UI.WebControls.Label SummaryLabel;
         protected global::System.Web.UI.WebControls.GridView ResultsGrid;
+        protected global::System.Web.UI.WebControls.Button ImportMoreButton;
     }
 }
