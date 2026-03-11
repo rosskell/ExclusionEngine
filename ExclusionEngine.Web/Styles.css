@@ -396,7 +396,6 @@ body {
   word-break: break-word;
 }
 
-
 .customer-grid td.col-select,
 .customer-grid td.col-action {
   vertical-align: middle;
@@ -404,4 +403,48 @@ body {
 .customer-grid td.col-action input[type=submit],
 .customer-grid td.col-action button {
   margin: 0 auto;
+}
+
+/* ============================================================
+   CSV Import preview grid
+   ============================================================ */
+.csv-preview-wrap {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  overflow-x: auto;
+  box-shadow: 0 1px 3px rgba(0,0,0,.05);
+}
+.csv-preview-grid {
+  table-layout: fixed;
+  min-width: 1500px;
+  width: 1500px;
+}
+.csv-preview-grid th,
+.csv-preview-grid td {
+  padding: 6px 8px;
+  vertical-align: middle;
+}
+/* Column width helpers */
+.csv-col-rownum { width: 44px; }
+.csv-col-sm     { width: 90px; }
+.csv-col-name   { width: 110px; }
+.csv-col-state  { width: 46px; }
+.csv-col-addr   { width: 190px; }
+/* Compact editable cell inputs */
+.csv-cell {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: 12px;
+  font-family: inherit;
+  color: #2d3748;
+  background: #fff;
+}
+.csv-cell:focus {
+  outline: none;
+  border-color: #1f5fbf;
+  box-shadow: 0 0 0 2px rgba(31,95,191,.12);
 }

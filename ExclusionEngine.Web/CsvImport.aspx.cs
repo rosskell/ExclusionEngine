@@ -4,12 +4,24 @@ using System.Data;
 using System.IO;
 using System.Text;
 using System.Web;
+using System.Web.UI.WebControls;
 
 namespace ExclusionEngine.Web
 {
     public partial class CsvImport : System.Web.UI.Page
     {
         private int UserId => Convert.ToInt32(Session["UserId"]);
+
+        private string CurrentStep
+        {
+            get => ViewState["Step"] as string ?? "upload";
+        }
+
+        private int PreviewClientId
+        {
+            get => ViewState["PreviewClientId"] as int? ?? 0;
+            set => ViewState["PreviewClientId"] = value;
+        }
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -22,7 +34,21 @@ namespace ExclusionEngine.Web
             if (!IsPostBack)
             {
                 BindClients();
+                SetStep("upload");
             }
+            else
+            {
+                // Restore panel visibility without re-binding grid (preserves user edits)
+                SetStep(CurrentStep);
+            }
+        }
+
+        private void SetStep(string step)
+        {
+            ViewState["Step"] = step;
+            UploadPanel.Visible = step == "upload";
+            PreviewPanel.Visible = step == "preview";
+            ResultsPanel.Visible = step == "results";
         }
 
         private void BindClients()
@@ -34,9 +60,10 @@ namespace ExclusionEngine.Web
             ClientDropDown.DataBind();
         }
 
-        protected void ImportButton_Click(object sender, EventArgs e)
+        // ── Step 1: Parse CSV and show preview grid ──────────────────────────
+
+        protected void PreviewButton_Click(object sender, EventArgs e)
         {
-            ResultsPanel.Visible = false;
             MessageLabel.Text = string.Empty;
 
             if (!int.TryParse(ClientDropDown.SelectedValue, out var clientId) || clientId <= 0)
@@ -88,6 +115,36 @@ namespace ExclusionEngine.Web
                 return;
             }
 
+            var dt = BuildPreviewDataTable(rows, headers);
+            if (dt.Rows.Count == 0)
+            {
+                MessageLabel.Text = "<span class='error'>No data rows found in the CSV (all rows were blank).</span>";
+                return;
+            }
+
+            PreviewClientId = clientId;
+            PreviewGrid.DataSource = dt;
+            PreviewGrid.DataBind();
+
+            var client = Repository.GetClientById(clientId);
+            PreviewMessageLabel.Text = $"<span class='success'>{dt.Rows.Count} row(s) loaded for client " +
+                $"<strong>{HttpUtility.HtmlEncode(client?.ClientDisplay ?? clientId.ToString())}</strong>. " +
+                "Edit as needed, then click Import Selected.</span>";
+
+            SetStep("preview");
+        }
+
+        // ── Step 2: Import selected rows ─────────────────────────────────────
+
+        protected void ImportSelectedButton_Click(object sender, EventArgs e)
+        {
+            var clientId = PreviewClientId;
+            if (clientId <= 0 || !Repository.UserHasClientAccess(UserId, clientId))
+            {
+                PreviewMessageLabel.Text = "<span class='error'>Client authorization error. Please start over.</span>";
+                return;
+            }
+
             var results = new DataTable();
             results.Columns.Add("Row");
             results.Columns.Add("Name");
@@ -99,29 +156,20 @@ namespace ExclusionEngine.Web
             var errorCount = 0;
             var skippedCount = 0;
 
-            for (var i = 1; i < rows.Count; i++)
+            foreach (GridViewRow row in PreviewGrid.Rows)
             {
-                var row = rows[i];
+                if (row.RowType != DataControlRowType.DataRow) continue;
 
-                // Skip entirely blank rows
-                var allBlank = true;
-                foreach (var cell in row)
-                {
-                    if (!string.IsNullOrWhiteSpace(cell))
-                    {
-                        allBlank = false;
-                        break;
-                    }
-                }
-
-                if (allBlank)
+                var cb = row.FindControl("SelectRowCheckBox") as CheckBox;
+                if (cb == null || !cb.Checked)
                 {
                     skippedCount++;
                     continue;
                 }
 
-                var entry = BuildEntry(clientId, row, headers);
-                var rowNum = (i + 1).ToString(); // +1 because row 1 is header
+                var rowNum = (PreviewGrid.DataKeys[row.RowIndex].Value ?? (row.RowIndex + 2)).ToString();
+                var entry = ReadEntryFromRow(row, clientId);
+
                 string statusText;
                 string notesText;
 
@@ -142,7 +190,7 @@ namespace ExclusionEngine.Web
                     if (cass.HasError)
                     {
                         toSave = entry;
-                        notesText = "CASS warning: " + cass.ErrorMessage + " (saved with original address)";
+                        notesText = "CASS warning: " + cass.ErrorMessage + " (saved with original)";
                     }
                     else if (cass.HasChanges)
                     {
@@ -169,36 +217,101 @@ namespace ExclusionEngine.Web
                 results.Rows.Add(rowNum, entry.FullName, entry.FormattedAddress, statusText, notesText);
             }
 
-            ResultsPanel.Visible = true;
             SummaryLabel.Text = $"<p><strong>{successCount} imported</strong>, {errorCount} failed" +
-                (skippedCount > 0 ? $", {skippedCount} blank rows skipped" : string.Empty) + ".</p>";
+                (skippedCount > 0 ? $", {skippedCount} skipped" : string.Empty) + ".</p>";
             ResultsGrid.DataSource = results;
             ResultsGrid.DataBind();
 
-            MessageLabel.Text = errorCount == 0
-                ? $"<span class='success'>Import complete. {successCount} records imported.</span>"
-                : $"<span class='warn'>Import complete with errors. {successCount} imported, {errorCount} failed.</span>";
+            SetStep("results");
         }
 
-        private static CustomerEntryInput BuildEntry(int clientId, string[] row, Dictionary<string, int> headers)
+        protected void StartOverButton_Click(object sender, EventArgs e)
         {
-            var zipRaw = GetCell(row, headers, "zip");
+            SetStep("upload");
+            BindClients();
+        }
+
+        protected void ImportMoreButton_Click(object sender, EventArgs e)
+        {
+            SetStep("upload");
+            BindClients();
+        }
+
+        // ── Helpers: reading row data ─────────────────────────────────────────
+
+        private static CustomerEntryInput ReadEntryFromRow(GridViewRow row, int clientId)
+        {
+            var zipRaw = GetBoxText(row, "ZipBox");
             return new CustomerEntryInput
             {
                 ClientId = clientId,
-                CustomerNumber = GetCell(row, headers, "customernumber"),
-                FirstName = ToTitleCase(GetCell(row, headers, "firstname")),
-                LastName = ToTitleCase(GetCell(row, headers, "lastname")),
-                Address1 = GetCell(row, headers, "address1"),
-                Address2 = GetCell(row, headers, "address2"),
-                City = GetCell(row, headers, "city"),
-                State = (GetCell(row, headers, "state") ?? string.Empty).Trim().ToUpperInvariant(),
+                CustomerNumber = GetBoxText(row, "CustomerNumberBox"),
+                FirstName = ToTitleCase(GetBoxText(row, "FirstNameBox")),
+                LastName = ToTitleCase(GetBoxText(row, "LastNameBox")),
+                Address1 = GetBoxText(row, "Address1Box"),
+                Address2 = GetBoxText(row, "Address2Box"),
+                City = GetBoxText(row, "CityBox"),
+                State = GetBoxText(row, "StateBox").ToUpperInvariant(),
                 Zip = ExtractZip5(zipRaw),
                 Zip4 = ExtractZip4(zipRaw),
-                Email = GetCell(row, headers, "email"),
-                Phone = GetCell(row, headers, "phone"),
-                Notes = GetCell(row, headers, "notes")
+                Email = GetBoxText(row, "EmailBox"),
+                Phone = GetBoxText(row, "PhoneBox"),
+                Notes = GetBoxText(row, "NotesBox")
             };
+        }
+
+        private static string GetBoxText(GridViewRow row, string controlId)
+        {
+            var box = row.FindControl(controlId) as TextBox;
+            return box == null ? string.Empty : box.Text.Trim();
+        }
+
+        // ── Helpers: building preview DataTable ───────────────────────────────
+
+        private static DataTable BuildPreviewDataTable(List<string[]> rows, Dictionary<string, int> headers)
+        {
+            var dt = new DataTable();
+            dt.Columns.Add("RowNum", typeof(int));
+            dt.Columns.Add("CustomerNumber");
+            dt.Columns.Add("FirstName");
+            dt.Columns.Add("LastName");
+            dt.Columns.Add("Address1");
+            dt.Columns.Add("Address2");
+            dt.Columns.Add("City");
+            dt.Columns.Add("State");
+            dt.Columns.Add("Zip");
+            dt.Columns.Add("Email");
+            dt.Columns.Add("Phone");
+            dt.Columns.Add("Notes");
+
+            for (var i = 1; i < rows.Count; i++)
+            {
+                var row = rows[i];
+                var allBlank = true;
+                foreach (var c in row)
+                {
+                    if (!string.IsNullOrWhiteSpace(c)) { allBlank = false; break; }
+                }
+
+                if (allBlank) continue;
+
+                dt.Rows.Add(
+                    i + 1, // RowNum — 1-based with header=row 1, so data starts at 2
+                    GetCell(row, headers, "customernumber"),
+                    ToTitleCase(GetCell(row, headers, "firstname")),
+                    ToTitleCase(GetCell(row, headers, "lastname")),
+                    GetCell(row, headers, "address1"),
+                    GetCell(row, headers, "address2"),
+                    GetCell(row, headers, "city"),
+                    GetCell(row, headers, "state").ToUpperInvariant(),
+                    GetCell(row, headers, "zip"), // raw — e.g. "12345" or "12345-6789"
+                    GetCell(row, headers, "email"),
+                    GetCell(row, headers, "phone"),
+                    GetCell(row, headers, "notes")
+                );
+            }
+
+            return dt;
         }
 
         private static string GetCell(string[] row, Dictionary<string, int> headers, string canonicalKey)
@@ -207,6 +320,8 @@ namespace ExclusionEngine.Web
                 return string.Empty;
             return (row[idx] ?? string.Empty).Trim();
         }
+
+        // ── Helpers: CSV parsing & header mapping ─────────────────────────────
 
         private static Dictionary<string, int> MapHeaders(string[] headerRow)
         {
@@ -225,7 +340,6 @@ namespace ExclusionEngine.Web
                 { "notes",          new[] { "notes", "note", "comments", "comment", "remarks", "memo" } }
             };
 
-            // Build reverse: alias text -> canonical key
             var reverse = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             foreach (var kvp in aliases)
             {
@@ -244,8 +358,8 @@ namespace ExclusionEngine.Web
             if (!map.ContainsKey("address1") && !map.ContainsKey("city") && !map.ContainsKey("state"))
             {
                 throw new InvalidOperationException(
-                    "CSV header row was not recognized. Ensure the first row contains column headers. " +
-                    "Expected at minimum: Address1, City, State.");
+                    "CSV header row was not recognized. Ensure the first row contains column headers " +
+                    "including at least Address1, City, and State.");
             }
 
             return map;
@@ -293,25 +407,17 @@ namespace ExclusionEngine.Web
                 }
                 else
                 {
-                    if (c == '"')
-                    {
-                        inQuotes = true;
-                    }
-                    else if (c == ',')
-                    {
-                        fields.Add(field.ToString());
-                        field.Clear();
-                    }
-                    else
-                    {
-                        field.Append(c);
-                    }
+                    if (c == '"') inQuotes = true;
+                    else if (c == ',') { fields.Add(field.ToString()); field.Clear(); }
+                    else field.Append(c);
                 }
             }
 
             fields.Add(field.ToString());
             return fields.ToArray();
         }
+
+        // ── Helpers: zip parsing ──────────────────────────────────────────────
 
         private static string ExtractZip5(string zip)
         {
