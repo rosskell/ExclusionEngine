@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "ExclusionEngine.Web (IIS Express HTTP)",
+      "runtimeExecutable": "C:\\Program Files (x86)\\IIS Express\\iisexpress.exe",
+      "runtimeArgs": [
+        "/config:C:\\Users\\beavis\\source\\repos\\ExclusionEngine\\.vs\\ExclusionEngine\\config\\applicationhost.config",
+        "/site:ExclusionEngine"
+      ],
+      "port": 27953
+    },
+    {
+      "name": "ExclusionEngine.Web (IIS Express HTTPS)",
+      "runtimeExecutable": "C:\\Program Files (x86)\\IIS Express\\iisexpress.exe",
+      "runtimeArgs": [
+        "/config:C:\\Users\\beavis\\source\\repos\\ExclusionEngine\\.vs\\ExclusionEngine\\config\\applicationhost.config",
+        "/site:ExclusionEngine"
+      ],
+      "port": 44375
+    }
+  ]
+}
