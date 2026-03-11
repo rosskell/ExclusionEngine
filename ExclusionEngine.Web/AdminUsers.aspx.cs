@@ -62,14 +62,27 @@ namespace ExclusionEngine.Web
 
         private void BindUsers()
         {
-            UsersGrid.DataSource = Repository.GetAllUsersForAdmin();
+            int? disabledFilter = null;
+            if (int.TryParse(StatusFilterDropDown.SelectedValue, out int parsedStatus))
+                disabledFilter = parsedStatus;
+
+            UsersGrid.DataSource = Repository.GetAllUsersForAdmin(
+                SearchUsernameTextBox.Text.Trim(),
+                SearchCompanyTextBox.Text.Trim(),
+                disabledFilter);
             UsersGrid.DataBind();
+        }
+
+        protected void SearchUsersButton_Click(object sender, EventArgs e)
+        {
+            BindUsers();
         }
 
         protected void SaveUserButton_Click(object sender, EventArgs e)
         {
             var username = AdminUsernameTextBox.Text.Trim();
             var email = AdminEmailTextBox.Text.Trim();
+            var companyName = AdminCompanyNameTextBox.Text.Trim();
             var password = AdminPasswordTextBox.Text;
             var clientIds = IsAdminCheckBox.Checked
                 ? new System.Collections.Generic.List<int>()
@@ -104,6 +117,7 @@ namespace ExclusionEngine.Web
                     {
                         Username = username,
                         Email = email,
+                        CompanyName = companyName,
                         IsAdmin = IsAdminCheckBox.Checked,
                         IsDisabled = IsDisabledCheckBox.Checked,
                         ClientIds = clientIds
@@ -124,6 +138,7 @@ namespace ExclusionEngine.Web
                         UserId = editUserId,
                         Username = username,
                         Email = email,
+                        CompanyName = companyName,
                         IsAdmin = IsAdminCheckBox.Checked,
                         IsDisabled = IsDisabledCheckBox.Checked,
                         ClientIds = clientIds
@@ -137,7 +152,7 @@ namespace ExclusionEngine.Web
             }
             catch (Exception ex)
             {
-                AdminMessageLabel.Text = $"<span class='error'>{HttpUtility.HtmlEncode(ex.Message)}</span>";
+                AdminMessageLabel.Text = ErrorHandling.ToUserMessage(ex);
             }
         }
 
@@ -158,6 +173,7 @@ namespace ExclusionEngine.Web
                 EditingUserId.Value = user.UserId.ToString();
                 AdminUsernameTextBox.Text = user.Username;
                 AdminEmailTextBox.Text = user.Email;
+                AdminCompanyNameTextBox.Text = user.CompanyName;
                 AdminPasswordTextBox.Text = string.Empty;
                 IsAdminCheckBox.Checked = user.IsAdmin;
                 IsDisabledCheckBox.Checked = user.IsDisabled;
@@ -211,7 +227,7 @@ namespace ExclusionEngine.Web
                 }
                 catch (Exception ex)
                 {
-                    AdminMessageLabel.Text = $"<span class='error'>{HttpUtility.HtmlEncode(ex.Message)}</span>";
+                    AdminMessageLabel.Text = ErrorHandling.ToUserMessage(ex);
                 }
             }
         }
@@ -227,6 +243,7 @@ namespace ExclusionEngine.Web
             EditingUserId.Value = string.Empty;
             AdminUsernameTextBox.Text = string.Empty;
             AdminEmailTextBox.Text = string.Empty;
+            AdminCompanyNameTextBox.Text = string.Empty;
             AdminPasswordTextBox.Text = string.Empty;
             IsAdminCheckBox.Checked = false;
             IsDisabledCheckBox.Checked = false;

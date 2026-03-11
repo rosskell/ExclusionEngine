@@ -40,14 +40,24 @@ namespace ExclusionEngine.Web
             ClientDropDown.DataTextField = "ClientDisplay";
             ClientDropDown.DataValueField = "ClientId";
             ClientDropDown.DataBind();
+
+            SearchClientDropDown.Items.Clear();
+            SearchClientDropDown.Items.Add(new System.Web.UI.WebControls.ListItem("All Clients", "0"));
+            foreach (var c in clients)
+                SearchClientDropDown.Items.Add(new System.Web.UI.WebControls.ListItem(c.ClientDisplay, c.ClientId.ToString()));
         }
 
         private void BindRecent()
         {
+            int? clientId = null;
+            if (int.TryParse(SearchClientDropDown.SelectedValue, out int parsedClientId) && parsedClientId > 0)
+                clientId = parsedClientId;
+
             RecentGrid.DataSource = Repository.GetRecentEntriesForUser(
                 UserId,
                 SearchLastNameTextBox.Text.Trim(),
-                SearchAddress1TextBox.Text.Trim());
+                SearchAddress1TextBox.Text.Trim(),
+                clientId);
             RecentGrid.DataBind();
         }
 
@@ -79,6 +89,7 @@ namespace ExclusionEngine.Web
 
         protected void ClearSearchButton_Click(object sender, EventArgs e)
         {
+            SearchClientDropDown.SelectedValue = "0";
             SearchLastNameTextBox.Text = string.Empty;
             SearchAddress1TextBox.Text = string.Empty;
             BindRecent();
@@ -156,7 +167,7 @@ namespace ExclusionEngine.Web
                 }
                 catch (Exception ex)
                 {
-                    MessageLabel.Text = $"<span class='error'>{HttpUtility.HtmlEncode(ex.Message)}</span>";
+                    MessageLabel.Text = ErrorHandling.ToUserMessage(ex);
                 }
             }
         }
@@ -223,12 +234,15 @@ namespace ExclusionEngine.Web
                 if (IsEditing)
                 {
                     PreserveExistingCassFieldsForEdit(entry);
-                    Repository.UpdateEntry(UserId, Convert.ToInt32(EditingEntryId.Value), entry);
+                    var entryId = Convert.ToInt32(EditingEntryId.Value);
+                    Repository.UpdateEntry(UserId, entryId, entry);
+                    TryLogAudit("CustomerEntryUpdated", entryId, entry.ClientId);
                     MessageLabel.Text = "<span class='success'>Customer entry updated.</span>";
                 }
                 else
                 {
-                    Repository.SaveEntry(UserId, entry);
+                    var entryId = Repository.SaveEntry(UserId, entry);
+                    TryLogAudit("CustomerEntryCreated", entryId, entry.ClientId);
                     MessageLabel.Text = "<span class='success'>Customer entry saved.</span>";
                 }
 
@@ -238,7 +252,26 @@ namespace ExclusionEngine.Web
             }
             catch (Exception ex)
             {
-                MessageLabel.Text = $"<span class='error'>{HttpUtility.HtmlEncode(ex.Message)}</span>";
+                MessageLabel.Text = ErrorHandling.ToUserMessage(ex);
+            }
+        }
+
+        private void TryLogAudit(string action, int entryId, int clientId)
+        {
+            try
+            {
+                Repository.LogAuditEvent(
+                    UserId,
+                    Session["Username"] as string,
+                    action,
+                    "CustomerEntry",
+                    entryId.ToString(),
+                    "ClientId=" + clientId,
+                    Request.UserHostAddress);
+            }
+            catch
+            {
+                // Logging should never interrupt user actions.
             }
         }
 

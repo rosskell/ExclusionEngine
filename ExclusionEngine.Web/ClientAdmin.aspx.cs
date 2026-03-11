@@ -33,8 +33,29 @@ namespace ExclusionEngine.Web
 
         private void BindClients()
         {
-            ClientsGrid.DataSource = Repository.GetAllClients(includeInactive: true);
+            int? activeFilter = null;
+            if (int.TryParse(ClientStatusFilterDropDown.SelectedValue, out int parsedActive))
+                activeFilter = parsedActive;
+
+            ClientsGrid.DataSource = Repository.GetAllClients(
+                includeInactive: true,
+                clientCodeFilter: SearchClientCodeTextBox.Text.Trim(),
+                clientNameFilter: SearchClientNameTextBox.Text.Trim(),
+                activeFilter: activeFilter);
             ClientsGrid.DataBind();
+        }
+
+        protected void SearchClientsButton_Click(object sender, EventArgs e)
+        {
+            BindClients();
+        }
+
+        protected void ClearClientSearchButton_Click(object sender, EventArgs e)
+        {
+            SearchClientCodeTextBox.Text = string.Empty;
+            SearchClientNameTextBox.Text = string.Empty;
+            ClientStatusFilterDropDown.SelectedValue = string.Empty;
+            BindClients();
         }
 
         protected void SaveClientButton_Click(object sender, EventArgs e)
@@ -72,7 +93,7 @@ namespace ExclusionEngine.Web
             }
             catch (Exception ex)
             {
-                ClientMessageLabel.Text = $"<span class='error'>{HttpUtility.HtmlEncode(ex.Message)}</span>";
+                ClientMessageLabel.Text = ErrorHandling.ToUserMessage(ex);
             }
         }
 
@@ -108,7 +129,7 @@ namespace ExclusionEngine.Web
                 }
                 catch (Exception ex)
                 {
-                    ClientMessageLabel.Text = $"<span class='error'>{HttpUtility.HtmlEncode(ex.Message)}</span>";
+                    ClientMessageLabel.Text = ErrorHandling.ToUserMessage(ex);
                 }
             }
         }

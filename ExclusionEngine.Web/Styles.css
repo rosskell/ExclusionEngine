@@ -244,6 +244,11 @@ body {
   grid-template-columns: auto minmax(120px, 1fr) auto minmax(120px, 1fr) auto minmax(120px, 1fr);
 }
 
+/* Recent Entries filters — label+dropdown + label+text + label+text + 2 buttons */
+.recent-entries-filters {
+  grid-template-columns: auto minmax(120px, 1fr) auto minmax(120px, 1fr) auto minmax(120px, 1fr) auto auto;
+}
+
 /* ============================================================
    Status messages
    ============================================================ */
@@ -285,6 +290,12 @@ body {
 
 /* Bulk-select checkbox column */
 .col-select { width: 36px; text-align: center; padding: 6px 4px !important; }
+
+/* User Admin actions column — keeps buttons from overlapping */
+.grid td.col-actions { white-space: nowrap; width: 1%; }
+
+/* User search inputs in action-row */
+.search-input { width: 140px; }
 
 /* Grid row action buttons (Edit / Delete) */
 .grid td input[type=submit],
@@ -379,3 +390,18 @@ body {
 .customer-grid .col-client  { width: 90px; }
 .customer-grid .col-address { width: 260px; }
 .customer-grid .col-email   { width: 260px; }
+
+.customer-grid td.col-email {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+
+.customer-grid td.col-select,
+.customer-grid td.col-action {
+  vertical-align: middle;
+}
+.customer-grid td.col-action input[type=submit],
+.customer-grid td.col-action button {
+  margin: 0 auto;
+}

@@ -24,7 +24,7 @@
             <label>State</label><asp:TextBox ID="StateTextBox" runat="server" MaxLength="2" />
             <label>Zip</label><asp:TextBox ID="ZipTextBox" runat="server" MaxLength="10" />
             <label>Email</label><asp:TextBox ID="EmailTextBox" runat="server" TextMode="Email" />
-            <label>Phone</label><asp:TextBox ID="PhoneTextBox" runat="server" />
+            <label>Phone</label><asp:TextBox ID="PhoneTextBox" runat="server" CssClass="phone-format" />
             <label>Notes</label><asp:TextBox ID="NotesTextBox" runat="server" TextMode="MultiLine" Rows="3" />
             <asp:HiddenField ID="ConfirmedStandardized" runat="server" Value="false" ClientIDMode="Static" />
             <asp:HiddenField ID="UseOriginalAddress" runat="server" Value="false" ClientIDMode="Static" />
@@ -50,7 +50,9 @@
 
     <div class="card">
         <h3>Recent Entries (Authorized Clients Only)</h3>
-        <div class="search-row">
+        <div class="search-row recent-entries-filters">
+            <label>Client</label>
+            <asp:DropDownList ID="SearchClientDropDown" runat="server" />
             <label>Search Last Name</label><asp:TextBox ID="SearchLastNameTextBox" runat="server" />
             <label>Search Address 1</label><asp:TextBox ID="SearchAddress1TextBox" runat="server" />
             <asp:Button ID="SearchEntriesButton" runat="server" Text="Search" CssClass="btn" OnClick="SearchEntriesButton_Click" CausesValidation="false" UseSubmitBehavior="false" />

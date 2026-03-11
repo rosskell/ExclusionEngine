@@ -63,6 +63,19 @@ CREATE TABLE dbo.CustomerEntries (
     CONSTRAINT FK_CustomerEntries_Clients FOREIGN KEY (ClientId) REFERENCES dbo.Clients(ClientId)
 );
 
+IF OBJECT_ID('dbo.AuditLogs','U') IS NULL
+CREATE TABLE dbo.AuditLogs (
+    AuditId INT IDENTITY(1,1) PRIMARY KEY,
+    UserId INT NULL,
+    Username NVARCHAR(100) NULL,
+    Action NVARCHAR(100) NOT NULL,
+    EntityType NVARCHAR(100) NULL,
+    EntityId NVARCHAR(50) NULL,
+    Details NVARCHAR(1000) NULL,
+    IpAddress NVARCHAR(64) NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+
 IF COL_LENGTH('dbo.Users', 'Email') IS NULL
     ALTER TABLE dbo.Users ADD Email NVARCHAR(200) NULL;
 IF COL_LENGTH('dbo.Users', 'IsAdmin') IS NULL
@@ -84,6 +97,8 @@ IF COL_LENGTH('dbo.CustomerEntries', 'Phone') IS NULL
     ALTER TABLE dbo.CustomerEntries ADD Phone NVARCHAR(30) NULL;
 IF COL_LENGTH('dbo.Clients', 'IsActive') IS NULL
     ALTER TABLE dbo.Clients ADD IsActive BIT NOT NULL CONSTRAINT DF_Clients_IsActive DEFAULT(1);
+IF COL_LENGTH('dbo.Users', 'CompanyName') IS NULL
+    ALTER TABLE dbo.Users ADD CompanyName NVARCHAR(200) NULL;
 ";
                 new SqlCommand(sql, conn).ExecuteNonQuery();
             }
@@ -151,14 +166,27 @@ END
             }
         }
 
-        public static List<ClientModel> GetAllClients(bool includeInactive = false)
+        public static List<ClientModel> GetAllClients(bool includeInactive = false, string clientCodeFilter = null, string clientNameFilter = null, int? activeFilter = null)
         {
             var result = new List<ClientModel>();
             using (var conn = new SqlConnection(ConnectionString))
-            using (var cmd = new SqlCommand("SELECT ClientId, ClientCode, ClientName, IsActive FROM dbo.Clients WHERE @includeInactive = 1 OR IsActive = 1 ORDER BY ClientName", conn))
+            using (var cmd = new SqlCommand(@"
+SELECT ClientId, ClientCode, ClientName, IsActive FROM dbo.Clients
+WHERE (
+    @activeFilter != -1
+    OR @includeInactive = 1
+    OR IsActive = 1
+)
+AND (@activeFilter = -1 OR IsActive = CASE WHEN @activeFilter = 1 THEN 1 ELSE 0 END)
+AND (@code = '' OR ClientCode LIKE '%' + @code + '%')
+AND (@name = '' OR ClientName LIKE '%' + @name + '%')
+ORDER BY ClientName", conn))
             {
                 conn.Open();
                 cmd.Parameters.AddWithValue("@includeInactive", includeInactive ? 1 : 0);
+                cmd.Parameters.AddWithValue("@activeFilter", activeFilter.HasValue ? activeFilter.Value : -1);
+                cmd.Parameters.AddWithValue("@code", clientCodeFilter ?? string.Empty);
+                cmd.Parameters.AddWithValue("@name", clientNameFilter ?? string.Empty);
                 using (var reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
@@ -175,6 +203,25 @@ END
             }
 
             return result;
+        }
+
+        public static string GetBccResultCodeDescription(int code)
+        {
+            try
+            {
+                using (var conn = new SqlConnection(ConnectionString))
+                using (var cmd = new SqlCommand("SELECT Description FROM dbo.BCC_ResultCodeLookup WHERE Code = @code", conn))
+                {
+                    conn.Open();
+                    cmd.Parameters.AddWithValue("@code", code);
+                    var result = cmd.ExecuteScalar();
+                    return (result == null || result == DBNull.Value) ? string.Empty : result.ToString();
+                }
+            }
+            catch
+            {
+                return string.Empty;
+            }
         }
 
         public static ClientModel GetClientById(int clientId)
@@ -293,7 +340,7 @@ SELECT CASE WHEN EXISTS (
             }
         }
 
-        public static void SaveEntry(int userId, CustomerEntryInput input)
+        public static int SaveEntry(int userId, CustomerEntryInput input)
         {
             if (!UserHasClientAccess(userId, input.ClientId))
             {
@@ -305,7 +352,8 @@ SELECT CASE WHEN EXISTS (
 INSERT INTO dbo.CustomerEntries
 (UserId, ClientId, CustomerNumber, FirstName, LastName, Address1, Address2, City, State, Zip, Zip4, DeliveryPointBarcode, Email, Notes, Phone)
 VALUES
-(@u, @c, @n, @fn, @ln, @a1, @a2, @city, @st, @zip, @zip4, @dpb, @email, @notes, @phone)", conn))
+(@u, @c, @n, @fn, @ln, @a1, @a2, @city, @st, @zip, @zip4, @dpb, @email, @notes, @phone);
+SELECT CAST(SCOPE_IDENTITY() AS INT);", conn))
             {
                 conn.Open();
                 cmd.Parameters.AddWithValue("@u", userId);
@@ -323,7 +371,7 @@ VALUES
                 cmd.Parameters.AddWithValue("@email", string.IsNullOrWhiteSpace(input.Email) ? (object)DBNull.Value : input.Email);
                 cmd.Parameters.AddWithValue("@notes", string.IsNullOrWhiteSpace(input.Notes) ? (object)DBNull.Value : input.Notes);
                 cmd.Parameters.AddWithValue("@phone", string.IsNullOrWhiteSpace(input.Phone) ? (object)DBNull.Value : input.Phone);
-                cmd.ExecuteNonQuery();
+                return Convert.ToInt32(cmd.ExecuteScalar());
             }
         }
 
@@ -443,7 +491,26 @@ WHERE EntryId = @entryId", conn))
             }
         }
 
-        public static DataTable GetRecentEntriesForUser(int userId, string lastNameContains = null, string address1Contains = null)
+        public static void LogAuditEvent(int? userId, string username, string action, string entityType = null, string entityId = null, string details = null, string ipAddress = null)
+        {
+            using (var conn = new SqlConnection(ConnectionString))
+            using (var cmd = new SqlCommand(@"
+INSERT INTO dbo.AuditLogs (UserId, Username, Action, EntityType, EntityId, Details, IpAddress)
+VALUES (@userId, @username, @action, @entityType, @entityId, @details, @ipAddress)", conn))
+            {
+                conn.Open();
+                cmd.Parameters.AddWithValue("@userId", userId.HasValue ? (object)userId.Value : DBNull.Value);
+                cmd.Parameters.AddWithValue("@username", string.IsNullOrWhiteSpace(username) ? (object)DBNull.Value : username);
+                cmd.Parameters.AddWithValue("@action", action ?? string.Empty);
+                cmd.Parameters.AddWithValue("@entityType", string.IsNullOrWhiteSpace(entityType) ? (object)DBNull.Value : entityType);
+                cmd.Parameters.AddWithValue("@entityId", string.IsNullOrWhiteSpace(entityId) ? (object)DBNull.Value : entityId);
+                cmd.Parameters.AddWithValue("@details", string.IsNullOrWhiteSpace(details) ? (object)DBNull.Value : details);
+                cmd.Parameters.AddWithValue("@ipAddress", string.IsNullOrWhiteSpace(ipAddress) ? (object)DBNull.Value : ipAddress);
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        public static DataTable GetRecentEntriesForUser(int userId, string lastNameContains = null, string address1Contains = null, int? clientId = null)
         {
             using (var conn = new SqlConnection(ConnectionString))
             using (var cmd = new SqlCommand(@"
@@ -467,6 +534,7 @@ WHERE (
 )
 AND (@lastName = '' OR ce.LastName LIKE '%' + @lastName + '%')
 AND (@address1 = '' OR ce.Address1 LIKE '%' + @address1 + '%')
+AND (@clientId = 0 OR ce.ClientId = @clientId)
 ORDER BY ce.CreatedAt DESC", conn))
             {
                 conn.Open();
@@ -474,6 +542,7 @@ ORDER BY ce.CreatedAt DESC", conn))
                 cmd.Parameters.AddWithValue("@isAdmin", IsAdminUser(userId));
                 cmd.Parameters.AddWithValue("@lastName", lastNameContains ?? string.Empty);
                 cmd.Parameters.AddWithValue("@address1", address1Contains ?? string.Empty);
+                cmd.Parameters.AddWithValue("@clientId", clientId.GetValueOrDefault());
                 var dt = new DataTable();
                 dt.Load(cmd.ExecuteReader());
                 return dt;
@@ -526,14 +595,15 @@ ORDER BY ce.CreatedAt DESC", conn))
             }
         }
 
-        public static DataTable GetAllUsersForAdmin()
+        public static DataTable GetAllUsersForAdmin(string usernameFilter = null, string companyFilter = null, int? disabledFilter = null)
         {
             using (var conn = new SqlConnection(ConnectionString))
             using (var cmd = new SqlCommand(@"
-SELECT 
+SELECT
     u.UserId,
     u.Username,
     COALESCE(u.Email, '') AS Email,
+    COALESCE(u.CompanyName, '') AS CompanyName,
     u.IsAdmin,
     u.IsDisabled,
     CASE WHEN u.IsAdmin = 1 THEN '[ALL CLIENTS]'
@@ -547,9 +617,15 @@ SELECT
          ).value('.', 'nvarchar(max)'), 1, 2, '')
     END AS ClientCodes
 FROM dbo.Users u
+WHERE (@username = '' OR u.Username LIKE '%' + @username + '%')
+  AND (@company  = '' OR u.CompanyName LIKE '%' + @company + '%')
+  AND (@disabled = -1 OR u.IsDisabled = CASE WHEN @disabled = 1 THEN 1 ELSE 0 END)
 ORDER BY u.Username", conn))
             {
                 conn.Open();
+                cmd.Parameters.AddWithValue("@username", usernameFilter ?? string.Empty);
+                cmd.Parameters.AddWithValue("@company",  companyFilter  ?? string.Empty);
+                cmd.Parameters.AddWithValue("@disabled", disabledFilter.HasValue ? disabledFilter.Value : -1);
                 var dt = new DataTable();
                 dt.Load(cmd.ExecuteReader());
                 return dt;
@@ -563,7 +639,7 @@ ORDER BY u.Username", conn))
                 conn.Open();
                 UserAdminModel model = null;
 
-                using (var cmd = new SqlCommand("SELECT UserId, Username, COALESCE(Email,''), IsAdmin, IsDisabled FROM dbo.Users WHERE UserId=@id", conn))
+                using (var cmd = new SqlCommand("SELECT UserId, Username, COALESCE(Email,''), IsAdmin, IsDisabled, COALESCE(CompanyName,'') FROM dbo.Users WHERE UserId=@id", conn))
                 {
                     cmd.Parameters.AddWithValue("@id", userId);
                     using (var reader = cmd.ExecuteReader())
@@ -575,7 +651,8 @@ ORDER BY u.Username", conn))
                             Username = reader.GetString(1),
                             Email = reader.GetString(2),
                             IsAdmin = reader.GetBoolean(3),
-                            IsDisabled = reader.GetBoolean(4)
+                            IsDisabled = reader.GetBoolean(4),
+                            CompanyName = reader.GetString(5)
                         };
                     }
                 }
@@ -605,13 +682,14 @@ ORDER BY u.Username", conn))
                 {
                     int userId;
                     using (var cmd = new SqlCommand(@"
-INSERT INTO dbo.Users(Username, PasswordHash, Email, IsAdmin, IsDisabled)
-VALUES(@username, @passwordHash, @email, @isAdmin, @isDisabled);
+INSERT INTO dbo.Users(Username, PasswordHash, Email, CompanyName, IsAdmin, IsDisabled)
+VALUES(@username, @passwordHash, @email, @companyName, @isAdmin, @isDisabled);
 SELECT CAST(SCOPE_IDENTITY() AS INT);", conn, tx))
                     {
                         cmd.Parameters.AddWithValue("@username", user.Username ?? string.Empty);
                         cmd.Parameters.AddWithValue("@passwordHash", Security.HashPassword(password ?? string.Empty));
                         cmd.Parameters.AddWithValue("@email", string.IsNullOrWhiteSpace(user.Email) ? (object)DBNull.Value : user.Email.Trim());
+                        cmd.Parameters.AddWithValue("@companyName", string.IsNullOrWhiteSpace(user.CompanyName) ? (object)DBNull.Value : user.CompanyName.Trim());
                         cmd.Parameters.AddWithValue("@isAdmin", user.IsAdmin);
                         cmd.Parameters.AddWithValue("@isDisabled", user.IsDisabled);
                         userId = Convert.ToInt32(cmd.ExecuteScalar());
@@ -635,6 +713,7 @@ SELECT CAST(SCOPE_IDENTITY() AS INT);", conn, tx))
 UPDATE dbo.Users
 SET Username = @username,
     Email = @email,
+    CompanyName = @companyName,
     IsAdmin = @isAdmin,
     IsDisabled = @isDisabled";
 
@@ -650,6 +729,7 @@ SET Username = @username,
                         cmd.Parameters.AddWithValue("@userId", user.UserId);
                         cmd.Parameters.AddWithValue("@username", user.Username ?? string.Empty);
                         cmd.Parameters.AddWithValue("@email", string.IsNullOrWhiteSpace(user.Email) ? (object)DBNull.Value : user.Email.Trim());
+                        cmd.Parameters.AddWithValue("@companyName", string.IsNullOrWhiteSpace(user.CompanyName) ? (object)DBNull.Value : user.CompanyName.Trim());
                         cmd.Parameters.AddWithValue("@isAdmin", user.IsAdmin);
                         cmd.Parameters.AddWithValue("@isDisabled", user.IsDisabled);
                         if (!string.IsNullOrWhiteSpace(newPassword))

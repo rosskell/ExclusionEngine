@@ -10,5 +10,14 @@ namespace ExclusionEngine.Web
             Repository.EnsureSchema();
             Repository.EnsureSeedData();
         }
+
+        protected void Application_Error(object sender, EventArgs e)
+        {
+            var ex = Server.GetLastError();
+            if (ex != null)
+            {
+                ErrorHandling.LogException(ex);
+            }
+        }
     }
 }

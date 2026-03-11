@@ -16,6 +16,7 @@ namespace ExclusionEngine.Web
         public int UserId { get; set; }
         public string Username { get; set; }
         public string Email { get; set; }
+        public string CompanyName { get; set; }
         public bool IsAdmin { get; set; }
         public bool IsDisabled { get; set; }
         public List<int> ClientIds { get; set; } = new List<int>();

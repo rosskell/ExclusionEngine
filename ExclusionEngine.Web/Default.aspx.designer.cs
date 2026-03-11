@@ -25,6 +25,7 @@ namespace ExclusionEngine.Web
         protected global::System.Web.UI.WebControls.Button ValidateAddressButton;
         protected global::System.Web.UI.WebControls.Button CancelEditButton;
         protected global::System.Web.UI.WebControls.Literal ModalScriptLiteral;
+        protected global::System.Web.UI.WebControls.DropDownList SearchClientDropDown;
         protected global::System.Web.UI.WebControls.TextBox SearchLastNameTextBox;
         protected global::System.Web.UI.WebControls.TextBox SearchAddress1TextBox;
         protected global::System.Web.UI.WebControls.Button SearchEntriesButton;
