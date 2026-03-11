@@ -62,8 +62,20 @@ namespace ExclusionEngine.Web
 
         private void BindUsers()
         {
-            UsersGrid.DataSource = Repository.GetAllUsersForAdmin();
+            int? disabledFilter = null;
+            if (int.TryParse(StatusFilterDropDown.SelectedValue, out int parsedStatus))
+                disabledFilter = parsedStatus;
+
+            UsersGrid.DataSource = Repository.GetAllUsersForAdmin(
+                SearchUsernameTextBox.Text.Trim(),
+                SearchCompanyTextBox.Text.Trim(),
+                disabledFilter);
             UsersGrid.DataBind();
+        }
+
+        protected void SearchUsersButton_Click(object sender, EventArgs e)
+        {
+            BindUsers();
         }
 
         protected void SaveUserButton_Click(object sender, EventArgs e)
